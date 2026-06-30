@@ -1,0 +1,9 @@
+node_modules
+dist
+.git
+.DS_Store
+.codex-screenshots
+.codex-chrome-profile*
+npm-debug.log
+Dockerfile
+README.md

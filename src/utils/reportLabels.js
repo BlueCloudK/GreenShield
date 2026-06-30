@@ -1,60 +1,60 @@
 const riskLevelLabels = {
-  Low: "Thấp",
-  Medium: "Trung bình",
-  High: "Cao",
-  Critical: "Nghiêm trọng",
+  Low: "Low",
+  Medium: "Medium",
+  High: "High",
+  Critical: "Critical",
 };
 
 const severityLabels = {
-  Critical: "Nghiêm trọng",
-  High: "Cao",
-  Warning: "Cảnh báo",
-  Medium: "Trung bình",
-  Low: "Thấp",
-  Passed: "Đạt",
+  Critical: "Critical",
+  High: "High",
+  Warning: "Warning",
+  Medium: "Medium",
+  Low: "Low",
+  Passed: "Passed",
 };
 
 const moduleStatusLabels = {
-  Passed: "Đạt",
-  Warning: "Cảnh báo",
-  Failed: "Có lỗi",
-  "Not tested": "Chưa kiểm thử",
+  Passed: "Passed",
+  Warning: "Warning",
+  Failed: "Failed",
+  "Not tested": "Not tested",
 };
 
 const scanStatusLabels = {
-  Completed: "Hoàn tất",
-  Running: "Đang chạy",
-  "Retest Pending": "Chờ kiểm thử lại",
-  Failed: "Lỗi",
+  Completed: "Completed",
+  Running: "Running",
+  "Retest Pending": "Retest pending",
+  Failed: "Failed",
 };
 
 const retestStatusLabels = {
-  Passed: "Đã đạt",
-  Pending: "Chờ kiểm thử lại",
-  Ready: "Sẵn sàng",
-  "Not retested": "Chưa kiểm thử lại",
-  "Pending fix": "Chờ sửa",
-  Resolved: "Đã xử lý",
+  Passed: "Passed",
+  Pending: "Pending",
+  Ready: "Ready",
+  "Not retested": "Not retested",
+  "Pending fix": "Pending fix",
+  Resolved: "Resolved",
 };
 
 const moduleLabels = {
-  "Prompt Injection": "Tiêm lệnh prompt",
-  "RAG Data Leakage": "Rò rỉ dữ liệu RAG",
-  "Unsafe Tool Calls": "Gọi tool rủi ro",
-  "API / Key Exposure": "Lộ API / key",
-  "Agent Permission Risk": "Quyền agent quá rộng",
-  "Logging / Sensitive Data Exposure": "Log lộ dữ liệu nhạy cảm",
+  "Prompt Injection": "Prompt Injection",
+  "RAG Data Leakage": "RAG Data Leakage",
+  "Unsafe Tool Calls": "Unsafe Tool Calls",
+  "API / Key Exposure": "API / Key Exposure",
+  "Agent Permission Risk": "Agent Permission Risk",
+  "Logging / Sensitive Data Exposure": "Sensitive Log Exposure",
 };
 
 const categoryLabels = {
-  "Prompt Injection": "Tiêm lệnh prompt",
-  "RAG Leakage": "Rò rỉ RAG",
-  "Unsafe Tool Calls": "Gọi tool rủi ro",
-  "API / Key Exposure": "Lộ API / key",
+  "Prompt Injection": "Prompt Injection",
+  "RAG Leakage": "RAG Leakage",
+  "Unsafe Tool Calls": "Unsafe Tool Calls",
+  "API / Key Exposure": "API / Key Exposure",
 };
 
 const appTypeLabels = {
-  "RAG System": "Hệ thống RAG",
+  "RAG System": "RAG System",
   "AI Agent": "Agent AI",
   "AI agent": "Agent AI",
   "AI API": "API AI",
@@ -62,9 +62,9 @@ const appTypeLabels = {
 };
 
 const environmentLabels = {
-  Staging: "Kiểm thử",
+  Staging: "Staging",
   Demo: "Demo",
-  Production: "Vận hành thật",
+  Production: "Production",
 };
 
 function labelFrom(map, value) {

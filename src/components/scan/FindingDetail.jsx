@@ -8,7 +8,7 @@ const retestChecklist = [
   "Áp dụng bản sửa trong code, policy hoặc cấu hình.",
   "Chạy lại đúng module rủi ro trên mục tiêu đã sửa.",
   "So sánh bằng chứng mới với bước tái hiện ban đầu.",
-  "Chỉ đánh dấu đã xử lý khi kiểm thử lại đạt.",
+  "Chỉ đánh dấu resolved khi retest pass.",
 ];
 
 export function FindingDetail({ finding }) {
@@ -22,13 +22,13 @@ export function FindingDetail({ finding }) {
 
   const detailGroups = [
     {
-      title: "Vì sao quan trọng",
-      meta: "tác động",
+      title: "Why it matters",
+      meta: "impact",
       body: <p className="text-xs leading-5 text-slate-400">{finding.whyItMatters}</p>,
     },
     {
-      title: "Bằng chứng",
-      meta: `${finding.evidence.length} mục`,
+      title: "Evidence",
+      meta: `${finding.evidence.length} items`,
       body: (
         <div className="space-y-2">
           {maskedEvidence.map((item) => (
@@ -40,8 +40,8 @@ export function FindingDetail({ finding }) {
       ),
     },
     {
-      title: "Cách tái hiện",
-      meta: `${finding.reproductionSteps.length} bước`,
+      title: "Reproduction steps",
+      meta: `${finding.reproductionSteps.length} steps`,
       body: (
         <ol className="space-y-2 text-xs text-slate-400">
           {finding.reproductionSteps.map((step, index) => (
@@ -54,8 +54,8 @@ export function FindingDetail({ finding }) {
       ),
     },
     {
-      title: "Checklist kiểm thử lại",
-      meta: `${retestChecklist.length} mục`,
+      title: "Retest checklist",
+      meta: `${retestChecklist.length} items`,
       body: (
         <div className="space-y-2">
           {retestChecklist.map((item, index) => (
@@ -91,15 +91,15 @@ export function FindingDetail({ finding }) {
         <div className="min-w-0 border-b border-white/10 p-4 lg:border-b-0 lg:border-r">
           <section>
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-black text-white">Bằng chứng tấn công</h3>
-              <span className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-200">Hành vi quan sát</span>
+              <h3 className="text-sm font-black text-white">Attack evidence</h3>
+              <span className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-200">Observed behavior</span>
             </div>
             <div className="mt-3 overflow-hidden rounded-xl border border-rose-300/20 bg-rose-300/[0.06]">
               {[
-                ["Prompt tấn công", attackPrompt],
-                ["Phản hồi AI", aiResponse],
-                ["Kết quả", attackResult],
-                ["Vì sao chứng minh lỗi", proof],
+                ["Attack prompt", attackPrompt],
+                ["AI response", aiResponse],
+                ["Result", attackResult],
+                ["Why this proves it", proof],
               ].map(([label, value], index) => (
                 <div className={`p-3 ${index ? "border-t border-white/10" : ""}`} key={label}>
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">{label}</p>
@@ -110,17 +110,17 @@ export function FindingDetail({ finding }) {
           </section>
 
           <section className="mt-4">
-            <h3 className="text-sm font-black text-white">Tác động đến sản phẩm</h3>
+            <h3 className="text-sm font-black text-white">Product impact</h3>
             <p className="mt-2 text-sm leading-6 text-slate-400">{finding.productImpact || finding.whyItMatters}</p>
           </section>
         </div>
 
         <aside className="min-w-0 p-4">
           <section className="rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-3">
-            <h3 className="text-sm font-black text-white">Việc nên làm tiếp theo</h3>
+            <h3 className="text-sm font-black text-white">Recommended next action</h3>
             <p className="mt-1.5 text-sm leading-6 text-emerald-50">{finding.recommendedAction || finding.suggestedFix}</p>
             <div className="mt-3 border-t border-emerald-300/15 pt-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-200/80">Hướng sửa đề xuất</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-200/80">Suggested fix</p>
               <p className="mt-1.5 text-xs leading-5 text-emerald-50">{finding.suggestedFix}</p>
             </div>
           </section>
@@ -139,7 +139,7 @@ export function FindingDetail({ finding }) {
 
           <Button className="w-full px-3 py-2 text-xs" variant="secondary">
             <RefreshCw size={17} aria-hidden="true" />
-            Chạy kiểm thử lại
+            Run retest
           </Button>
         </aside>
       </div>

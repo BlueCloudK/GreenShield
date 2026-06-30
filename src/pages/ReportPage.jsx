@@ -80,12 +80,12 @@ export default function ReportPage() {
   const { scanId } = useParams();
   const scan = mockScans.find((item) => item.id === scanId);
   const findings = mockFindings.filter((finding) => finding.scanId === scanId);
-  const categories = useMemo(() => ["Tất cả", ...new Set(findings.map((finding) => finding.category))], [findings]);
-  const [activeCategory, setActiveCategory] = useState("Tất cả");
+  const categories = useMemo(() => ["All", ...new Set(findings.map((finding) => finding.category))], [findings]);
+  const [activeCategory, setActiveCategory] = useState("All");
   const [selectedFindingId, setSelectedFindingId] = useState(findings[0]?.id || "");
 
   const filteredFindings = useMemo(
-    () => (activeCategory === "Tất cả" ? findings : findings.filter((finding) => finding.category === activeCategory)),
+    () => (activeCategory === "All" ? findings : findings.filter((finding) => finding.category === activeCategory)),
     [activeCategory, findings],
   );
 
@@ -95,7 +95,7 @@ export default function ReportPage() {
   );
 
   function selectCategory(category) {
-    const nextFindings = category === "Tất cả" ? findings : findings.filter((finding) => finding.category === category);
+    const nextFindings = category === "All" ? findings : findings.filter((finding) => finding.category === category);
     setActiveCategory(category);
     setSelectedFindingId(nextFindings[0]?.id || "");
   }
@@ -121,18 +121,18 @@ export default function ReportPage() {
     })
     .filter((module) => ["Failed", "Warning"].includes(module.status));
   const scanMetadata = [
-    ["Loại ứng dụng", getAppTypeLabel(scan.appType)],
-    ["Môi trường", getEnvironmentLabel(scan.environment)],
-    ["Trạng thái kiểm thử", getScanStatusLabel(scan.status)],
-    ["Ngày kiểm thử", scanDate],
-    ["Kiểm thử lại", getRetestStatusLabel(retestStatus)],
+    ["App type", getAppTypeLabel(scan.appType)],
+    ["Environment", getEnvironmentLabel(scan.environment)],
+    ["Scan status", getScanStatusLabel(scan.status)],
+    ["Scan date", scanDate],
+    ["Retest", getRetestStatusLabel(retestStatus)],
   ];
 
   return (
     <section className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
       <div className="flex flex-col justify-between gap-4 border-b border-white/10 pb-4 lg:flex-row lg:items-end">
         <div className="min-w-0">
-          <p className="section-kicker">Báo cáo mẫu</p>
+          <p className="section-kicker">Demo report</p>
           <h1 className="mt-1.5 break-words text-3xl font-black leading-tight text-white sm:text-4xl">{scan.appName}</h1>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {scanMetadata.map(([label, value]) => (
@@ -146,11 +146,11 @@ export default function ReportPage() {
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button className="px-3 py-2 text-xs" variant="secondary">
             <RefreshCw size={17} aria-hidden="true" />
-            Chạy kiểm thử lại
+            Run retest
           </Button>
           <Button className="px-3 py-2 text-xs" variant="secondary">
             <Download size={17} aria-hidden="true" />
-            Xuất báo cáo
+            Export report
           </Button>
         </div>
       </div>
@@ -158,14 +158,14 @@ export default function ReportPage() {
       <section className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/55">
         <div className="grid min-w-0 divide-y divide-white/10 lg:grid-cols-[240px_minmax(0,1fr)_300px] lg:divide-x lg:divide-y-0">
           <div className="p-4">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Điểm rủi ro</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Risk score</p>
             <div className="mt-2 flex items-end gap-2">
               <span className="text-4xl font-black leading-none text-white">{scan.riskScore}</span>
               <span className="pb-1 text-sm font-bold text-slate-500">/100</span>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <RiskBadge level={scan.riskLevel} />
-              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold text-slate-300">{findings.length} phát hiện</span>
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold text-slate-300">{findings.length} findings</span>
               <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold text-slate-300">
                 {getRetestStatusLabel(retestStatus)}
               </span>
@@ -173,9 +173,9 @@ export default function ReportPage() {
           </div>
 
           <div className="p-4">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">Tóm tắt rủi ro</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">Security summary</p>
             <h2 className="mt-2 text-xl font-black leading-tight text-white">
-              {scan.appName} có thể bị đẩy ra ngoài phạm vi an toàn đã thiết kế.
+              {scan.appName} can be pushed outside its intended safety boundary.
             </h2>
             <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-300">{scan.securitySummary}</p>
             <div className="mt-3 grid gap-2 md:grid-cols-2">
@@ -186,7 +186,7 @@ export default function ReportPage() {
                     <ModuleStatusBadge status={item.status} />
                   </div>
                   <p className="mt-1.5 text-xs font-semibold leading-5 text-slate-300">
-                    {item.finding?.title || "Cần kiểm tra trước khi công bố."}
+                    {item.finding?.title || "Needs review before public release."}
                   </p>
                 </div>
               ))}
@@ -195,11 +195,11 @@ export default function ReportPage() {
 
           {fixFirstFinding ? (
             <aside className="border-l-0 border-emerald-300/20 bg-emerald-300/[0.06] p-4">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-200">Ưu tiên sửa</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-200">Fix first</p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <SeverityBadge severity={fixFirstFinding.severity} />
                 <span className="rounded-full border border-white/10 bg-slate-950/45 px-2 py-1 text-[11px] font-bold text-slate-300">
-                  Ưu tiên {fixFirstFinding.fixPriority || 1}
+                  Priority {fixFirstFinding.fixPriority || 1}
                 </span>
               </div>
               <h3 className="mt-2 text-sm font-black leading-tight text-white">{fixFirstFinding.title}</h3>
@@ -223,8 +223,8 @@ export default function ReportPage() {
                     <ModuleStatusBadge status={moduleStatus} />
                   </div>
                   <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                    <span>{tested ? "Đã kiểm thử" : "Chưa kiểm thử"}</span>
-                    <span>{moduleFindings.length || 0} phát hiện</span>
+                    <span>{tested ? "Tested" : "Not tested"}</span>
+                    <span>{moduleFindings.length || 0} findings</span>
                     {highestSeverity ? <SeverityBadge severity={highestSeverity} /> : null}
                   </div>
                 </div>

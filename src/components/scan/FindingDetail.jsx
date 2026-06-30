@@ -71,60 +71,60 @@ export function FindingDetail({ finding }) {
   ];
 
   return (
-    <aside className="gs-scrollbar min-w-0 p-3 lg:h-full lg:overflow-y-auto lg:p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 pb-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <SeverityBadge severity={finding.severity} />
-            <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-xs font-bold text-slate-300">
-              {finding.retestStatus}
-            </span>
-          </div>
-          <h2 className="mt-2 text-lg font-black leading-tight text-white">{finding.title}</h2>
+    <article className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/55">
+      <div className="border-b border-white/10 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <SeverityBadge severity={finding.severity} />
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold text-slate-300">
+            {finding.retestStatus}
+          </span>
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold text-slate-400">
+            {finding.category}
+          </span>
         </div>
+        <h2 className="mt-2 text-xl font-black leading-tight text-white">{finding.title}</h2>
+        <p className="mt-1.5 text-sm leading-6 text-slate-400">{attackResult}</p>
       </div>
 
-      <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="min-w-0 space-y-3">
-          <section className="rounded-xl border border-white/10 bg-slate-950/35 p-2.5">
-            <h3 className="text-sm font-bold text-white">What happened</h3>
-            <p className="mt-1.5 text-xs leading-5 text-slate-400">{attackResult}</p>
-          </section>
-
-          <section className="rounded-xl border border-rose-300/20 bg-rose-300/[0.07] p-2.5">
-            <h3 className="text-sm font-bold text-white">Attack evidence</h3>
-            <div className="mt-2 grid gap-2 md:grid-cols-2">
+      <div className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0 border-b border-white/10 p-4 lg:border-b-0 lg:border-r">
+          <section>
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-black text-white">Attack evidence</h3>
+              <span className="text-[10px] font-black uppercase tracking-[0.16em] text-rose-200">Observed behavior</span>
+            </div>
+            <div className="mt-3 overflow-hidden rounded-xl border border-rose-300/20 bg-rose-300/[0.06]">
               {[
                 ["Attack prompt", attackPrompt],
                 ["AI response", aiResponse],
                 ["Result", attackResult],
                 ["Why this proves it", proof],
-              ].map(([label, value]) => (
-                <div className="rounded-lg border border-white/10 bg-slate-950/50 p-2.5" key={label}>
+              ].map(([label, value], index) => (
+                <div className={`p-3 ${index ? "border-t border-white/10" : ""}`} key={label}>
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">{label}</p>
-                  <p className="mt-1.5 text-xs leading-5 text-slate-300">{value}</p>
+                  <p className="mt-1.5 text-sm leading-6 text-slate-200">{value}</p>
                 </div>
               ))}
             </div>
           </section>
+
+          <section className="mt-4">
+            <h3 className="text-sm font-black text-white">Business / product impact</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-400">{finding.productImpact || finding.whyItMatters}</p>
+          </section>
         </div>
 
-        <div className="min-w-0 space-y-3">
-          <section className="rounded-xl border border-white/10 bg-slate-950/35 p-2.5">
-            <h3 className="text-sm font-bold text-white">Business / product impact</h3>
-            <p className="mt-1.5 text-xs leading-5 text-slate-400">{finding.productImpact || finding.whyItMatters}</p>
-          </section>
-
-          <section className="rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-2.5">
-            <h3 className="text-sm font-bold text-white">Recommended next action</h3>
-            <p className="mt-1.5 text-xs leading-5 text-emerald-50">{finding.recommendedAction || finding.suggestedFix}</p>
-            <div className="mt-2 border-t border-emerald-300/15 pt-2">
+        <aside className="min-w-0 p-4">
+          <section className="rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-3">
+            <h3 className="text-sm font-black text-white">Recommended next action</h3>
+            <p className="mt-1.5 text-sm leading-6 text-emerald-50">{finding.recommendedAction || finding.suggestedFix}</p>
+            <div className="mt-3 border-t border-emerald-300/15 pt-3">
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-200/80">Suggested fix</p>
               <p className="mt-1.5 text-xs leading-5 text-emerald-50">{finding.suggestedFix}</p>
             </div>
           </section>
 
-          <div className="divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]">
+          <div className="mt-3 divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]">
             {detailGroups.map((group) => (
               <details className="group" key={group.title}>
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 text-sm font-bold text-white transition hover:bg-white/[0.04]">
@@ -140,8 +140,8 @@ export function FindingDetail({ finding }) {
             <RefreshCw size={17} aria-hidden="true" />
             Run retest
           </Button>
-        </div>
+        </aside>
       </div>
-    </aside>
+    </article>
   );
 }

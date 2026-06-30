@@ -2,7 +2,7 @@ import { SeverityBadge } from "./SeverityBadge";
 
 export function FindingList({ findings, onSelect, selectedId }) {
   return (
-    <div className="gs-scrollbar min-w-0 lg:h-[406px] lg:overflow-y-auto">
+    <div className="gs-scrollbar min-w-0 lg:max-h-[560px] lg:overflow-y-auto">
       <div className="border-b border-white/10 px-3 py-2.5">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Findings</p>
         <p className="mt-0.5 text-xs font-semibold text-slate-300">{findings.length} issues found</p>

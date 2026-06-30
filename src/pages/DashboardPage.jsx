@@ -21,13 +21,13 @@ export default function DashboardPage() {
     <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
       <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
         <SectionHeader
-          kicker="Bảng điều khiển"
+          kicker="Dashboard"
           title="Phiên kiểm thử bảo mật AI"
           description="Tạo phiên kiểm thử, xem điểm rủi ro, đọc bằng chứng khai thác và theo dõi kiểm thử lại sau khi sửa."
         />
         <Button className="w-fit" to="/scan/new">
           <ScanLine size={17} aria-hidden="true" />
-          Tạo phiên kiểm thử
+          Tạo scan mới
         </Button>
       </div>
 

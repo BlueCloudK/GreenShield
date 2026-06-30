@@ -19,7 +19,7 @@ export function Header() {
   const { isAuthenticated, user, logout } = useAuth();
   const scanRoute = isAuthenticated ? "/scan/new" : "/login";
   const scanState = isAuthenticated ? undefined : { from: { pathname: "/scan/new" } };
-  const primaryActionLabel = isAuthenticated ? "Tạo phiên kiểm thử" : "Đăng nhập để kiểm thử";
+  const primaryActionLabel = isAuthenticated ? "Tạo scan mới" : "Đăng nhập để scan";
 
   function isActiveRoute(to) {
     if (to === "/") return location.pathname === "/";
@@ -52,7 +52,7 @@ export function Header() {
           <GreenShieldLogo showWordmark />
         </Link>
 
-        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
+        <nav className="hidden min-w-0 items-center gap-1 lg:ml-6 lg:flex">
           {navItems.map((item) => (
             <Link
               aria-current={isActiveRoute(item.to) ? "page" : undefined}
@@ -73,7 +73,7 @@ export function Header() {
           {user ? (
             <>
               <Button to="/dashboard" variant="secondary">
-                Bảng điều khiển
+                Dashboard
               </Button>
               <Button onClick={handleLogout} variant="ghost">
                 Đăng xuất
@@ -120,7 +120,7 @@ export function Header() {
             {user ? (
               <>
                 <Button className="w-full" onClick={() => setMenuOpen(false)} to="/dashboard" variant="secondary">
-                  Bảng điều khiển
+                  Dashboard
                 </Button>
                 <Button className="w-full" onClick={handleLogout} variant="ghost">
                   Đăng xuất

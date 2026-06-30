@@ -8,7 +8,15 @@ import { RiskBadge } from "../components/scan/RiskBadge";
 import { SeverityBadge } from "../components/scan/SeverityBadge";
 import { Button } from "../components/ui/Button";
 import { mockFindings, mockScans, riskModules } from "../data/scans";
-import { getCategoryLabel, getModuleLabel, getModuleStatusLabel, getRetestStatusLabel, getScanStatusLabel } from "../utils/reportLabels";
+import {
+  getAppTypeLabel,
+  getCategoryLabel,
+  getEnvironmentLabel,
+  getModuleLabel,
+  getModuleStatusLabel,
+  getRetestStatusLabel,
+  getScanStatusLabel,
+} from "../utils/reportLabels";
 import NotFoundPage from "./NotFoundPage";
 
 const severityRank = {
@@ -113,11 +121,11 @@ export default function ReportPage() {
     })
     .filter((module) => ["Failed", "Warning"].includes(module.status));
   const scanMetadata = [
-    ["Loại app", scan.appType],
-    ["Môi trường", scan.environment],
-    ["Trạng thái scan", getScanStatusLabel(scan.status)],
-    ["Ngày scan", scanDate],
-    ["Retest", getRetestStatusLabel(retestStatus)],
+    ["Loại ứng dụng", getAppTypeLabel(scan.appType)],
+    ["Môi trường", getEnvironmentLabel(scan.environment)],
+    ["Trạng thái kiểm thử", getScanStatusLabel(scan.status)],
+    ["Ngày kiểm thử", scanDate],
+    ["Kiểm thử lại", getRetestStatusLabel(retestStatus)],
   ];
 
   return (
@@ -138,7 +146,7 @@ export default function ReportPage() {
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button className="px-3 py-2 text-xs" variant="secondary">
             <RefreshCw size={17} aria-hidden="true" />
-            Chạy retest
+            Chạy kiểm thử lại
           </Button>
           <Button className="px-3 py-2 text-xs" variant="secondary">
             <Download size={17} aria-hidden="true" />
@@ -178,7 +186,7 @@ export default function ReportPage() {
                     <ModuleStatusBadge status={item.status} />
                   </div>
                   <p className="mt-1.5 text-xs font-semibold leading-5 text-slate-300">
-                    {item.finding?.title || "Cần kiểm tra trước khi public."}
+                    {item.finding?.title || "Cần kiểm tra trước khi công bố."}
                   </p>
                 </div>
               ))}
@@ -215,7 +223,7 @@ export default function ReportPage() {
                     <ModuleStatusBadge status={moduleStatus} />
                   </div>
                   <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                    <span>{tested ? "Đã test" : "Chưa test"}</span>
+                    <span>{tested ? "Đã kiểm thử" : "Chưa kiểm thử"}</span>
                     <span>{moduleFindings.length || 0} phát hiện</span>
                     {highestSeverity ? <SeverityBadge severity={highestSeverity} /> : null}
                   </div>

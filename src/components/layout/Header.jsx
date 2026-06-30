@@ -19,7 +19,7 @@ export function Header() {
   const { isAuthenticated, user, logout } = useAuth();
   const scanRoute = isAuthenticated ? "/scan/new" : "/login";
   const scanState = isAuthenticated ? undefined : { from: { pathname: "/scan/new" } };
-  const primaryActionLabel = isAuthenticated ? "Tạo scan mới" : "Đăng nhập để scan";
+  const primaryActionLabel = isAuthenticated ? "Tạo phiên kiểm thử" : "Đăng nhập để kiểm thử";
 
   function isActiveRoute(to) {
     if (to === "/") return location.pathname === "/";
@@ -73,7 +73,7 @@ export function Header() {
           {user ? (
             <>
               <Button to="/dashboard" variant="secondary">
-                Dashboard
+                Bảng điều khiển
               </Button>
               <Button onClick={handleLogout} variant="ghost">
                 Đăng xuất
@@ -85,7 +85,7 @@ export function Header() {
         </div>
 
         <button
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
           className="focus-ring ml-auto inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.07] text-slate-100 lg:hidden"
           onClick={() => setMenuOpen((isOpen) => !isOpen)}
           type="button"
@@ -120,7 +120,7 @@ export function Header() {
             {user ? (
               <>
                 <Button className="w-full" onClick={() => setMenuOpen(false)} to="/dashboard" variant="secondary">
-                  Dashboard
+                  Bảng điều khiển
                 </Button>
                 <Button className="w-full" onClick={handleLogout} variant="ghost">
                   Đăng xuất

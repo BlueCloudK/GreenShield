@@ -12,8 +12,8 @@ export default function ProductsPage() {
       <div className="flex min-w-0 flex-col justify-between gap-5 lg:flex-row lg:items-end">
         <SectionHeader
           kicker="Bảng giá"
-          title="Services & packages cho AI security"
-          description="Các gói GreenShield tập trung vào red teaming cho LLM app, RAG pipeline, AI agent, bằng chứng khai thác, hướng sửa và retest sau khi khắc phục."
+          title="Dịch vụ và gói kiểm thử bảo mật AI"
+          description="Các gói GreenShield tập trung vào red team cho ứng dụng LLM, pipeline RAG, agent AI, bằng chứng khai thác, hướng sửa và kiểm thử lại sau khi khắc phục."
         />
         <Button className="w-full sm:w-fit" to="/contact">Yêu cầu assessment</Button>
       </div>
@@ -40,11 +40,11 @@ export default function ProductsPage() {
             <p className="mt-5 text-4xl font-black text-white">{plan.price}</p>
             <div className="mt-5 grid gap-2 text-xs sm:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-slate-950/45 p-3">
-                <p className="text-slate-500">Scans</p>
+                <p className="text-slate-500">Lượt kiểm thử</p>
                 <p className="mt-1 font-bold text-slate-200">{plan.scanQuota}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-slate-950/45 p-3">
-                <p className="text-slate-500">Retest</p>
+                <p className="text-slate-500">Kiểm thử lại</p>
                 <p className="mt-1 font-bold text-slate-200">{plan.retestCount}</p>
               </div>
             </div>

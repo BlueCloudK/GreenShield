@@ -6,9 +6,9 @@ import { getCategoryLabel, getRetestStatusLabel } from "../../utils/reportLabels
 
 const retestChecklist = [
   "Áp dụng bản sửa trong code, policy hoặc cấu hình.",
-  "Chạy lại đúng module rủi ro trên target đã sửa.",
+  "Chạy lại đúng module rủi ro trên mục tiêu đã sửa.",
   "So sánh bằng chứng mới với bước tái hiện ban đầu.",
-  "Chỉ đánh dấu đã xử lý khi retest đạt.",
+  "Chỉ đánh dấu đã xử lý khi kiểm thử lại đạt.",
 ];
 
 export function FindingDetail({ finding }) {
@@ -54,7 +54,7 @@ export function FindingDetail({ finding }) {
       ),
     },
     {
-      title: "Checklist retest",
+      title: "Checklist kiểm thử lại",
       meta: `${retestChecklist.length} mục`,
       body: (
         <div className="space-y-2">
@@ -139,7 +139,7 @@ export function FindingDetail({ finding }) {
 
           <Button className="w-full px-3 py-2 text-xs" variant="secondary">
             <RefreshCw size={17} aria-hidden="true" />
-            Chạy retest
+            Chạy kiểm thử lại
           </Button>
         </aside>
       </div>

@@ -1,4 +1,5 @@
 import { CheckCircle2 } from "lucide-react";
+import { getModuleLabel } from "../../utils/reportLabels";
 
 export function RiskModuleCard({ module, selected, onToggle }) {
   return (
@@ -12,11 +13,11 @@ export function RiskModuleCard({ module, selected, onToggle }) {
       type="button"
     >
       <div className="flex items-start justify-between gap-4">
-        <h3 className="font-black text-white">{module}</h3>
+        <h3 className="font-black text-white">{getModuleLabel(module)}</h3>
         {selected ? <CheckCircle2 className="text-emerald-300" size={20} aria-hidden="true" /> : null}
       </div>
       <p className="mt-3 text-sm leading-6 text-slate-400">
-        Đưa module này vào phiên scan và tạo phát hiện có bằng chứng nếu phát hiện rủi ro.
+        Đưa module này vào phiên kiểm thử và tạo phát hiện có bằng chứng nếu phát hiện rủi ro.
       </p>
     </button>
   );

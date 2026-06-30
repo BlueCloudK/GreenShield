@@ -18,39 +18,53 @@ const moduleStatusLabels = {
   Passed: "Đạt",
   Warning: "Cảnh báo",
   Failed: "Có lỗi",
-  "Not tested": "Chưa test",
+  "Not tested": "Chưa kiểm thử",
 };
 
 const scanStatusLabels = {
   Completed: "Hoàn tất",
   Running: "Đang chạy",
-  "Retest Pending": "Chờ retest",
+  "Retest Pending": "Chờ kiểm thử lại",
   Failed: "Lỗi",
 };
 
 const retestStatusLabels = {
   Passed: "Đã đạt",
-  Pending: "Chờ retest",
+  Pending: "Chờ kiểm thử lại",
   Ready: "Sẵn sàng",
-  "Not retested": "Chưa retest",
+  "Not retested": "Chưa kiểm thử lại",
   "Pending fix": "Chờ sửa",
   Resolved: "Đã xử lý",
 };
 
 const moduleLabels = {
-  "Prompt Injection": "Prompt injection",
+  "Prompt Injection": "Tiêm lệnh prompt",
   "RAG Data Leakage": "Rò rỉ dữ liệu RAG",
-  "Unsafe Tool Calls": "Tool call rủi ro",
+  "Unsafe Tool Calls": "Gọi tool rủi ro",
   "API / Key Exposure": "Lộ API / key",
   "Agent Permission Risk": "Quyền agent quá rộng",
   "Logging / Sensitive Data Exposure": "Log lộ dữ liệu nhạy cảm",
 };
 
 const categoryLabels = {
-  "Prompt Injection": "Prompt injection",
+  "Prompt Injection": "Tiêm lệnh prompt",
   "RAG Leakage": "Rò rỉ RAG",
-  "Unsafe Tool Calls": "Tool call rủi ro",
+  "Unsafe Tool Calls": "Gọi tool rủi ro",
   "API / Key Exposure": "Lộ API / key",
+};
+
+const appTypeLabels = {
+  "RAG System": "Hệ thống RAG",
+  "AI Agent": "Agent AI",
+  "AI agent": "Agent AI",
+  "AI API": "API AI",
+  Chatbot: "Chatbot",
+};
+
+const environmentLabels = {
+  Staging: "Kiểm thử",
+  Demo: "Demo",
+  Production: "Vận hành thật",
 };
 
 function labelFrom(map, value) {
@@ -83,4 +97,12 @@ export function getModuleLabel(module) {
 
 export function getCategoryLabel(category) {
   return labelFrom(categoryLabels, category);
+}
+
+export function getAppTypeLabel(appType) {
+  return labelFrom(appTypeLabels, appType);
+}
+
+export function getEnvironmentLabel(environment) {
+  return labelFrom(environmentLabels, environment);
 }

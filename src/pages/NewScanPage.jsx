@@ -5,6 +5,7 @@ import { RiskModuleCard } from "../components/scan/RiskModuleCard";
 import { Button } from "../components/ui/Button";
 import { FormField, inputClasses } from "../components/ui/FormField";
 import { riskModules } from "../data/scans";
+import { getAppTypeLabel, getEnvironmentLabel, getModuleLabel } from "../utils/reportLabels";
 
 const appTypes = ["Chatbot", "RAG System", "AI Agent", "AI API"];
 const environments = ["Demo", "Staging", "Production"];
@@ -16,7 +17,7 @@ const demoPresets = [
     description: "Demo phổ biến cho chatbot hỏi đáp tài liệu công ty.",
     icon: DatabaseZap,
     form: {
-      appName: "Support Copilot",
+      appName: "Trợ lý hỗ trợ",
       appType: "RAG System",
       environment: "Staging",
       endpoint: "https://demo.greenshield.local/support-copilot",
@@ -29,7 +30,7 @@ const demoPresets = [
     description: "Kiểm tra tool call, quyền thao tác và approval flow.",
     icon: Workflow,
     form: {
-      appName: "Sales Agent",
+      appName: "Agent bán hàng",
       appType: "AI Agent",
       environment: "Demo",
       endpoint: "https://demo.greenshield.local/sales-agent",
@@ -38,11 +39,11 @@ const demoPresets = [
     },
   },
   {
-    title: "Public chatbot",
+    title: "Chatbot công khai",
     description: "Kiểm tra prompt injection và rò rỉ thông tin từ bot công khai.",
     icon: Bot,
     form: {
-      appName: "Public FAQ Bot",
+      appName: "Bot FAQ công khai",
       appType: "Chatbot",
       environment: "Production",
       endpoint: "https://demo.greenshield.local/public-faq",
@@ -53,7 +54,7 @@ const demoPresets = [
 ];
 
 const defaultForm = {
-  appName: "Support Copilot",
+  appName: "Trợ lý hỗ trợ",
   appType: "RAG System",
   environment: "Staging",
   endpoint: "https://demo.greenshield.local/support-copilot",
@@ -78,7 +79,7 @@ export default function NewScanPage() {
 
   const validationHint = useMemo(() => {
     if (step === 0 && !form.appName.trim()) return "Vui lòng nhập tên app để tiếp tục.";
-    if (step === 1 && !form.endpoint.trim()) return "Vui lòng nhập URL hoặc demo target.";
+    if (step === 1 && !form.endpoint.trim()) return "Vui lòng nhập URL hoặc mục tiêu demo.";
     if (step === 2 && form.modules.length === 0) return "Chọn ít nhất một module rủi ro.";
     return "";
   }, [form, step]);
@@ -201,7 +202,7 @@ export default function NewScanPage() {
           </div>
 
           <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.035] p-4">
-            <p className="text-sm font-black text-white">Demo target</p>
+            <p className="text-sm font-black text-white">Mục tiêu demo</p>
             <p className="mt-2 text-sm leading-6 text-slate-400">{form.appName}</p>
             <div className="mt-3 flex items-center gap-2 text-xs font-bold text-emerald-200">
               <Globe2 size={14} aria-hidden="true" />
@@ -222,14 +223,14 @@ export default function NewScanPage() {
                 <FormField label="Loại app" name="appType">
                   <select className={inputClasses} onChange={(event) => updateField("appType", event.target.value)} value={form.appType}>
                     {appTypes.map((type) => (
-                      <option key={type} value={type}>{type}</option>
+                      <option key={type} value={type}>{getAppTypeLabel(type)}</option>
                     ))}
                   </select>
                 </FormField>
                 <FormField label="Môi trường" name="environment">
                   <select className={inputClasses} onChange={(event) => updateField("environment", event.target.value)} value={form.environment}>
                     {environments.map((environment) => (
-                      <option key={environment} value={environment}>{environment}</option>
+                      <option key={environment} value={environment}>{getEnvironmentLabel(environment)}</option>
                     ))}
                   </select>
                 </FormField>
@@ -241,13 +242,13 @@ export default function NewScanPage() {
             <div>
               <h2 className="text-2xl font-black text-white">Mục tiêu test</h2>
               <div className="mt-6 space-y-5">
-                <FormField label="Endpoint URL hoặc demo target" name="endpoint">
+                <FormField label="Endpoint URL hoặc mục tiêu demo" name="endpoint">
                   <input className={inputClasses} onChange={(event) => updateField("endpoint", event.target.value)} value={form.endpoint} />
                 </FormField>
                 <FormField label="API key/token tùy chọn" name="apiKey">
-                  <input className={inputClasses} onChange={(event) => updateField("apiKey", event.target.value)} placeholder="Để trống khi dùng demo scan" value={form.apiKey} />
+                  <input className={inputClasses} onChange={(event) => updateField("apiKey", event.target.value)} placeholder="Để trống khi dùng bản demo" value={form.apiKey} />
                 </FormField>
-                <FormField label="System prompt hoặc policy text tùy chọn" name="systemPrompt">
+                <FormField label="Prompt hệ thống hoặc policy tùy chọn" name="systemPrompt">
                   <textarea className={`${inputClasses} min-h-28`} onChange={(event) => updateField("systemPrompt", event.target.value)} value={form.systemPrompt} />
                 </FormField>
                 <FormField label="Ghi chú knowledge base cho RAG" name="ragNotes">
@@ -280,11 +281,11 @@ export default function NewScanPage() {
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 {[
                   ["App", form.appName],
-                  ["Loại", form.appType],
-                  ["Môi trường", form.environment],
-                  ["Target", form.endpoint],
+                  ["Loại", getAppTypeLabel(form.appType)],
+                  ["Môi trường", getEnvironmentLabel(form.environment)],
+                  ["Mục tiêu", form.endpoint],
                   ["Số module", `${form.modules.length} module rủi ro`],
-                  ["Module", form.modules.join(", ")],
+                  ["Module", form.modules.map(getModuleLabel).join(", ")],
                 ].map(([label, value]) => (
                   <div className="rounded-2xl border border-white/10 bg-slate-950/45 p-4" key={label}>
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">{label}</p>
@@ -294,7 +295,7 @@ export default function NewScanPage() {
               </div>
               <div className="mt-5 rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-4 text-sm leading-6 text-emerald-50">
                 <ShieldCheck className="mb-3 text-emerald-200" size={20} aria-hidden="true" />
-                Sau khi bấm chạy scan, demo sẽ chuyển sang progress mock và mở báo cáo mẫu để người dùng gửi feedback.
+                Sau khi bấm chạy kiểm thử, demo sẽ chuyển sang tiến trình mock và mở báo cáo mẫu để người dùng gửi góp ý.
               </div>
             </div>
           ) : null}
@@ -310,7 +311,7 @@ export default function NewScanPage() {
                   Tiếp tục
                 </Button>
               ) : (
-                <Button onClick={runScan}>Chạy scan demo</Button>
+                <Button onClick={runScan}>Chạy kiểm thử demo</Button>
               )}
             </div>
           </div>

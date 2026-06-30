@@ -8,6 +8,7 @@ import { RiskBadge } from "../components/scan/RiskBadge";
 import { SeverityBadge } from "../components/scan/SeverityBadge";
 import { Button } from "../components/ui/Button";
 import { mockFindings, mockScans, riskModules } from "../data/scans";
+import { getCategoryLabel, getModuleLabel, getModuleStatusLabel, getRetestStatusLabel, getScanStatusLabel } from "../utils/reportLabels";
 import NotFoundPage from "./NotFoundPage";
 
 const severityRank = {
@@ -62,7 +63,7 @@ function ModuleStatusBadge({ status }) {
 
   return (
     <span className={`rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${styles[status]}`}>
-      {status}
+      {getModuleStatusLabel(status)}
     </span>
   );
 }
@@ -112,11 +113,11 @@ export default function ReportPage() {
     })
     .filter((module) => ["Failed", "Warning"].includes(module.status));
   const scanMetadata = [
-    ["App type", scan.appType],
-    ["Environment", scan.environment],
-    ["Scan status", scan.status],
-    ["Scan date", scanDate],
-    ["Retest status", retestStatus],
+    ["Loại app", scan.appType],
+    ["Môi trường", scan.environment],
+    ["Trạng thái scan", getScanStatusLabel(scan.status)],
+    ["Ngày scan", scanDate],
+    ["Retest", getRetestStatusLabel(retestStatus)],
   ];
 
   return (
@@ -149,33 +150,35 @@ export default function ReportPage() {
       <section className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/55">
         <div className="grid min-w-0 divide-y divide-white/10 lg:grid-cols-[240px_minmax(0,1fr)_300px] lg:divide-x lg:divide-y-0">
           <div className="p-4">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Risk score</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Điểm rủi ro</p>
             <div className="mt-2 flex items-end gap-2">
               <span className="text-4xl font-black leading-none text-white">{scan.riskScore}</span>
               <span className="pb-1 text-sm font-bold text-slate-500">/100</span>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <RiskBadge level={scan.riskLevel} />
-              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold text-slate-300">{findings.length} findings</span>
-              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold text-slate-300">{retestStatus}</span>
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold text-slate-300">{findings.length} phát hiện</span>
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold text-slate-300">
+                {getRetestStatusLabel(retestStatus)}
+              </span>
             </div>
           </div>
 
           <div className="p-4">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">Security story</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">Tóm tắt rủi ro</p>
             <h2 className="mt-2 text-xl font-black leading-tight text-white">
-              {scan.appName} can be pushed outside its intended safety boundary.
+              {scan.appName} có thể bị đẩy ra ngoài phạm vi an toàn đã thiết kế.
             </h2>
             <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-300">{scan.securitySummary}</p>
             <div className="mt-3 grid gap-2 md:grid-cols-2">
               {riskHighlights.map((item) => (
                 <div className="rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2" key={item.name}>
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">{item.name}</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">{getModuleLabel(item.name)}</p>
                     <ModuleStatusBadge status={item.status} />
                   </div>
                   <p className="mt-1.5 text-xs font-semibold leading-5 text-slate-300">
-                    {item.finding?.title || "Needs review before public release."}
+                    {item.finding?.title || "Cần kiểm tra trước khi public."}
                   </p>
                 </div>
               ))}
@@ -184,11 +187,11 @@ export default function ReportPage() {
 
           {fixFirstFinding ? (
             <aside className="border-l-0 border-emerald-300/20 bg-emerald-300/[0.06] p-4">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-200">Fix first</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-200">Ưu tiên sửa</p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <SeverityBadge severity={fixFirstFinding.severity} />
                 <span className="rounded-full border border-white/10 bg-slate-950/45 px-2 py-1 text-[11px] font-bold text-slate-300">
-                  Priority {fixFirstFinding.fixPriority || 1}
+                  Ưu tiên {fixFirstFinding.fixPriority || 1}
                 </span>
               </div>
               <h3 className="mt-2 text-sm font-black leading-tight text-white">{fixFirstFinding.title}</h3>
@@ -208,12 +211,12 @@ export default function ReportPage() {
               return (
                 <div className="min-w-[210px] rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2" key={module}>
                   <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-xs font-black text-white">{module}</p>
+                    <p className="truncate text-xs font-black text-white">{getModuleLabel(module)}</p>
                     <ModuleStatusBadge status={moduleStatus} />
                   </div>
                   <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                    <span>{tested ? "Tested" : "Not tested"}</span>
-                    <span>{moduleFindings.length || 0} findings</span>
+                    <span>{tested ? "Đã test" : "Chưa test"}</span>
+                    <span>{moduleFindings.length || 0} phát hiện</span>
                     {highestSeverity ? <SeverityBadge severity={highestSeverity} /> : null}
                   </div>
                 </div>
@@ -237,7 +240,7 @@ export default function ReportPage() {
                 onClick={() => selectCategory(category)}
                 type="button"
               >
-                {category}
+                {getCategoryLabel(category)}
               </button>
             ))}
           </div>

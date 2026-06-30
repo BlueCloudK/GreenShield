@@ -1,3 +1,5 @@
+import { getSeverityLabel } from "../../utils/reportLabels";
+
 const severityStyles = {
   Critical: "border-rose-400/35 bg-rose-400/15 text-rose-100",
   High: "border-rose-300/30 bg-rose-300/10 text-rose-100",
@@ -14,7 +16,7 @@ export function SeverityBadge({ severity }) {
         severityStyles[severity] || "border-slate-500/30 bg-slate-500/10 text-slate-200"
       }`}
     >
-      {severity}
+      {getSeverityLabel(severity)}
     </span>
   );
 }

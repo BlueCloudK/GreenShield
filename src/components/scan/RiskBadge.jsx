@@ -1,3 +1,5 @@
+import { getRiskLevelLabel } from "../../utils/reportLabels";
+
 const riskStyles = {
   Low: "border-emerald-300/30 bg-emerald-300/10 text-emerald-100",
   Medium: "border-amber-300/30 bg-amber-300/10 text-amber-100",
@@ -12,7 +14,7 @@ export function RiskBadge({ level }) {
         riskStyles[level] || "border-slate-500/30 bg-slate-500/10 text-slate-200"
       }`}
     >
-      {level}
+      {getRiskLevelLabel(level)}
     </span>
   );
 }

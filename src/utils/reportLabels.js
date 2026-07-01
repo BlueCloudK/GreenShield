@@ -1,40 +1,40 @@
 const riskLevelLabels = {
-  Low: "Low",
-  Medium: "Medium",
-  High: "High",
-  Critical: "Critical",
+  Low: "Thấp",
+  Medium: "Trung bình",
+  High: "Cao",
+  Critical: "Nghiêm trọng",
 };
 
 const severityLabels = {
-  Critical: "Critical",
-  High: "High",
-  Warning: "Warning",
-  Medium: "Medium",
-  Low: "Low",
-  Passed: "Passed",
+  Critical: "Nghiêm trọng",
+  High: "Cao",
+  Warning: "Cảnh báo",
+  Medium: "Trung bình",
+  Low: "Thấp",
+  Passed: "Đạt",
 };
 
 const moduleStatusLabels = {
-  Passed: "Passed",
-  Warning: "Warning",
-  Failed: "Failed",
-  "Not tested": "Not tested",
+  Passed: "Đạt",
+  Warning: "Cần chú ý",
+  Failed: "Có lỗi",
+  "Not tested": "Chưa kiểm thử",
 };
 
 const scanStatusLabels = {
-  Completed: "Completed",
-  Running: "Running",
-  "Retest Pending": "Retest pending",
-  Failed: "Failed",
+  Completed: "Hoàn tất",
+  Running: "Đang chạy",
+  "Retest Pending": "Chờ retest",
+  Failed: "Có lỗi",
 };
 
 const retestStatusLabels = {
-  Passed: "Passed",
-  Pending: "Pending",
-  Ready: "Ready",
-  "Not retested": "Not retested",
-  "Pending fix": "Pending fix",
-  Resolved: "Resolved",
+  Passed: "Đã đạt",
+  Pending: "Chờ retest",
+  Ready: "Sẵn sàng retest",
+  "Not retested": "Chưa retest",
+  "Pending fix": "Chờ sửa",
+  Resolved: "Đã xử lý",
 };
 
 const moduleLabels = {
@@ -47,6 +47,7 @@ const moduleLabels = {
 };
 
 const categoryLabels = {
+  All: "Tất cả",
   "Prompt Injection": "Prompt Injection",
   "RAG Leakage": "RAG Leakage",
   "Unsafe Tool Calls": "Unsafe Tool Calls",
@@ -63,7 +64,7 @@ const appTypeLabels = {
 
 const environmentLabels = {
   Staging: "Staging",
-  Demo: "Demo",
+  Demo: "Dùng thử",
   Production: "Production",
 };
 

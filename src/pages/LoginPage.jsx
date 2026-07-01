@@ -41,11 +41,10 @@ export default function LoginPage() {
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-300/10 text-cyan-200">
           <LockKeyhole size={26} aria-hidden="true" />
         </div>
-        <p className="section-kicker mt-8">Đăng nhập demo</p>
+        <p className="section-kicker mt-8">Tài khoản dùng thử</p>
         <h1 className="mt-3 text-4xl font-black text-white">Truy cập security console</h1>
         <p className="mt-4 leading-7 text-slate-400">
-          MVP này dùng đăng nhập mock trong localStorage để minh họa dashboard được bảo vệ.
-          Không dùng cơ chế xác thực này cho production.
+          Dùng tài khoản mẫu để xem dashboard, tạo phiên scan và đọc báo cáo bảo mật AI. Dữ liệu trong môi trường này chỉ phục vụ trải nghiệm sản phẩm.
         </p>
         <div className="mt-8 rounded-2xl border border-white/10 bg-slate-950/45 p-4 text-sm text-slate-300">
           <p>
@@ -64,6 +63,7 @@ export default function LoginPage() {
               autoComplete="email"
               className={inputClasses}
               inputMode="email"
+              name="email"
               onChange={(event) => setEmail(event.target.value)}
               value={email}
             />
@@ -71,6 +71,7 @@ export default function LoginPage() {
           <FormField label="Mật khẩu" name="password">
             <input
               className={inputClasses}
+              name="password"
               onChange={(event) => setPassword(event.target.value)}
               type="password"
               value={password}

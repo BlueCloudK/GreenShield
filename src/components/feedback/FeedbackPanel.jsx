@@ -46,9 +46,9 @@ export function FeedbackPanel({ source = "demo" }) {
           <MessageSquareText size={20} aria-hidden="true" />
         </span>
         <div>
-          <h2 className="text-xl font-black text-white">Gửi feedback cho MVP</h2>
+          <h2 className="text-xl font-black text-white">Gửi góp ý cho GreenShield</h2>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Feedback được lưu localStorage trong bản demo. Khi nối backend, phần này có thể gửi thẳng về hệ thống.
+            Chia sẻ điều bạn muốn cải thiện trong flow scan, báo cáo rủi ro hoặc hướng retest.
           </p>
         </div>
       </div>
@@ -94,7 +94,7 @@ export function FeedbackPanel({ source = "demo" }) {
 
         {submitted ? (
           <p className="rounded-xl border border-emerald-300/20 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100">
-            Đã lưu feedback demo. Cảm ơn bạn.
+            Đã ghi nhận góp ý. Cảm ơn bạn.
           </p>
         ) : null}
 

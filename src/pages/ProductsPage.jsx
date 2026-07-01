@@ -13,7 +13,7 @@ export default function ProductsPage() {
         <SectionHeader
           kicker="Bảng giá"
           title="Dịch vụ và gói kiểm thử bảo mật AI"
-          description="Các gói GreenShield tập trung vào red team cho ứng dụng LLM, pipeline RAG, agent AI, bằng chứng khai thác, hướng sửa và kiểm thử lại sau khi khắc phục."
+          description="Các gói GreenShield tập trung vào ứng dụng LLM, pipeline RAG và AI agent: scan rủi ro, bằng chứng tấn công, hướng fix và retest sau khi khắc phục."
         />
         <Button className="w-full sm:w-fit" to="/contact">Yêu cầu assessment</Button>
       </div>

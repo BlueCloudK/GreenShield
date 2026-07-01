@@ -37,7 +37,7 @@ export default function ContactPage() {
     if (Object.keys(nextErrors).length > 0) return;
 
     setForm(initialForm);
-    setSuccess("Đã ghi nhận yêu cầu demo trong localStorage. Bản MVP chưa gửi dữ liệu lên backend.");
+    setSuccess("Đã ghi nhận yêu cầu. GreenShield sẽ liên hệ lại để trao đổi phạm vi assessment.");
   }
 
   return (
@@ -46,8 +46,7 @@ export default function ContactPage() {
         <p className="section-kicker">Liên hệ</p>
         <h1 className="mt-3 text-5xl font-black text-white">Trao đổi với GreenShield</h1>
         <p className="mt-4 text-lg leading-8 text-slate-400">
-          Gửi yêu cầu demo hoặc góp ý về kiểm thử bảo mật AI, báo cáo rủi ro và quy trình retest.
-          Form này hiện chưa gửi dữ liệu lên backend.
+          Gửi yêu cầu assessment hoặc góp ý về kiểm thử bảo mật AI, báo cáo rủi ro và quy trình retest.
         </p>
       </div>
 

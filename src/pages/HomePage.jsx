@@ -139,10 +139,10 @@ export default function HomePage() {
   const { isAuthenticated } = useAuth();
   const scanRoute = isAuthenticated ? "/scan/new" : "/login";
   const scanState = isAuthenticated ? undefined : { from: { pathname: "/scan/new" } };
-  const primaryActionLabel = isAuthenticated ? "Tạo scan mới" : "Đăng nhập để scan";
+  const primaryActionLabel = isAuthenticated ? "Tạo scan mới" : "Bắt đầu scan";
   const helperText = isAuthenticated
-    ? "Bạn đang đăng nhập demo. Tạo scan mới để đi qua wizard, progress và report kết quả."
-    : "Scan cần đăng nhập demo để lưu phiên. Demo report có thể xem công khai.";
+    ? "Tạo scan mới để đi qua wizard, progress và report kết quả."
+    : "Đăng nhập bằng tài khoản dùng thử để lưu phiên scan. Báo cáo mẫu có thể xem công khai.";
 
   return (
     <main className="overflow-hidden">
@@ -156,7 +156,7 @@ export default function HomePage() {
               AI security assessment cho LLM, RAG và agent
             </span>
             <h1 className="mt-5 break-words text-4xl font-black leading-[0.98] tracking-tight text-white sm:text-6xl lg:text-[4.5rem]">
-              Scan rủi ro LLM, RAG và AI agent trước khi public
+              Kiểm thử bảo mật AI trước khi triển khai
             </h1>
             <p className="mt-6 max-w-2xl break-words text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
               GreenShield kiểm tra prompt injection, RAG leakage, unsafe tool use và API exposure. Kết quả có risk score, bằng chứng tấn công, hướng fix và retest.
@@ -296,7 +296,7 @@ export default function HomePage() {
               Báo cáo để đội kỹ thuật sửa được lỗi
             </h2>
             <p className="mt-5 text-lg leading-8 text-slate-400">
-              Mỗi phát hiện có mức độ, nhóm rủi ro, bằng chứng, bước tái hiện, khuyến nghị và trạng thái kiểm thử lại. Báo cáo phải giúp đội kỹ thuật biết sửa gì trước.
+              Mỗi phát hiện có mức độ, nhóm rủi ro, bằng chứng, bước tái hiện, khuyến nghị và trạng thái retest. Báo cáo phải giúp đội kỹ thuật biết sửa gì trước.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               {["Điểm rủi ro", "Bằng chứng", "Bước tái hiện", "Hướng sửa", "Kiểm thử lại"].map((item) => (
@@ -364,7 +364,7 @@ export default function HomePage() {
               Chọn gói theo độ sâu kiểm thử
             </h2>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-400">
-              Bắt đầu bằng kiểm thử tự động, sau đó nâng cấp sang assessment có bằng chứng, xuất báo cáo, kiểm thử lại và review thủ công khi cần.
+              Bắt đầu bằng scan tự động, sau đó nâng cấp sang assessment có bằng chứng, xuất báo cáo, retest và review thủ công khi cần.
             </p>
           </div>
           <Button className="w-full sm:w-fit" to="/products" variant="secondary">

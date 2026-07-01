@@ -19,7 +19,7 @@ export function Header() {
   const { isAuthenticated, user, logout } = useAuth();
   const scanRoute = isAuthenticated ? "/scan/new" : "/login";
   const scanState = isAuthenticated ? undefined : { from: { pathname: "/scan/new" } };
-  const primaryActionLabel = isAuthenticated ? "Tạo scan mới" : "Đăng nhập để scan";
+  const primaryActionLabel = isAuthenticated ? "Tạo scan mới" : "Bắt đầu scan";
 
   function isActiveRoute(to) {
     if (to === "/") return location.pathname === "/";

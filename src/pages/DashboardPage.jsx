@@ -22,8 +22,8 @@ export default function DashboardPage() {
       <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
         <SectionHeader
           kicker="Dashboard"
-          title="Phiên kiểm thử bảo mật AI"
-          description="Tạo phiên kiểm thử, xem điểm rủi ro, đọc bằng chứng khai thác và theo dõi kiểm thử lại sau khi sửa."
+          title="Trung tâm scan bảo mật AI"
+          description="Tạo phiên scan, xem điểm rủi ro, đọc bằng chứng tấn công và theo dõi retest sau khi sửa."
         />
         <Button className="w-fit" to="/scan/new">
           <ScanLine size={17} aria-hidden="true" />
@@ -32,26 +32,26 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={ScanLine} label="Tổng phiên kiểm thử" value={totalScans} />
+        <StatCard icon={ScanLine} label="Tổng phiên scan" value={totalScans} />
         <StatCard icon={AlertTriangle} label="Phát hiện rủi ro cao" tone="rose" value={highRiskFindings} />
         <StatCard icon={CheckCircle2} label="Trạng thái mới nhất" tone="cyan" value={lastScan ? getScanStatusLabel(lastScan.status) : "Chưa có"} />
-        <StatCard icon={FileClock} label="Đang chờ kiểm thử lại" tone="amber" value={retestsPending} />
+        <StatCard icon={FileClock} label="Đang chờ retest" tone="amber" value={retestsPending} />
       </div>
 
       <div className="mt-10">
         {mockScans.length === 0 ? (
           <EmptyState
-            actionLabel="Tạo phiên đầu tiên"
+            actionLabel="Tạo scan đầu tiên"
             actionTo="/scan/new"
-            description="Tạo phiên kiểm thử đầu tiên để có điểm rủi ro, phát hiện, bằng chứng và hướng sửa."
-            title="Bắt đầu phiên kiểm thử bảo mật AI đầu tiên"
+            description="Tạo phiên scan đầu tiên để có điểm rủi ro, phát hiện, bằng chứng và hướng sửa."
+            title="Bắt đầu scan bảo mật AI đầu tiên"
           />
         ) : (
           <>
             <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
               <div>
                 <p className="section-kicker">Phiên gần đây</p>
-                <h2 className="mt-2 text-3xl font-black text-white">Đánh giá ứng dụng AI mới nhất</h2>
+                <h2 className="mt-2 text-3xl font-black text-white">Phiên scan gần đây</h2>
               </div>
               <Button to="/reports/scan-gs-001" variant="secondary">
                 Xem báo cáo mẫu

@@ -23,7 +23,7 @@ export function Footer() {
         <div>
           <h3 className="font-bold text-white">Triển khai</h3>
           <p className="mt-3 text-sm leading-6 text-slate-400">
-            Dùng bản demo để đánh giá quy trình. Khi nối backend, GreenShield có thể lưu lịch sử scan, phân quyền team và xuất báo cáo cho khách hàng.
+            Bắt đầu bằng phiên scan dùng thử, sau đó mở rộng sang assessment theo phạm vi, retest và báo cáo cho đội kỹ thuật hoặc quản lý.
           </p>
         </div>
       </div>

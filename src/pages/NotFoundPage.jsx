@@ -6,7 +6,7 @@ export default function NotFoundPage() {
       <div className="glass-panel rounded-3xl p-10">
         <p className="section-kicker">404</p>
         <h1 className="mt-3 text-4xl font-black text-white">Page not found</h1>
-        <p className="mt-4 text-slate-400">This route does not exist in the GreenShield MVP demo.</p>
+        <p className="mt-4 text-slate-400">Trang này không tồn tại trong GreenShield.</p>
         <Button className="mt-8" to="/">
           Back home
         </Button>

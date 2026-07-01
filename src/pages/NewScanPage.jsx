@@ -14,7 +14,7 @@ const steps = ["Thông tin app", "Mục tiêu test", "Module rủi ro", "Xác nh
 const demoPresets = [
   {
     title: "RAG nội bộ",
-    description: "Demo phổ biến cho chatbot hỏi đáp tài liệu công ty.",
+    description: "Kịch bản phổ biến cho chatbot hỏi đáp tài liệu công ty.",
     icon: DatabaseZap,
     form: {
       appName: "Trợ lý hỗ trợ",
@@ -79,7 +79,7 @@ export default function NewScanPage() {
 
   const validationHint = useMemo(() => {
     if (step === 0 && !form.appName.trim()) return "Vui lòng nhập tên app để tiếp tục.";
-    if (step === 1 && !form.endpoint.trim()) return "Vui lòng nhập URL hoặc mục tiêu demo.";
+    if (step === 1 && !form.endpoint.trim()) return "Vui lòng nhập URL hoặc mục tiêu scan.";
     if (step === 2 && form.modules.length === 0) return "Chọn ít nhất một module rủi ro.";
     return "";
   }, [form, step]);
@@ -119,18 +119,18 @@ export default function NewScanPage() {
     <section className="mx-auto min-w-0 max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
         <div className="min-w-0">
-          <p className="text-sm font-bold text-emerald-200">Public demo</p>
+          <p className="text-sm font-bold text-emerald-200">Tạo phiên scan</p>
           <h1 className="mt-3 max-w-3xl break-words text-3xl font-black leading-tight text-white sm:text-5xl">
             Chạy thử một phiên kiểm thử bảo mật AI
           </h1>
           <p className="mt-4 max-w-2xl break-words text-base leading-7 text-slate-400 sm:text-lg sm:leading-8">
-            Chọn kịch bản mẫu, chỉnh thông tin nếu muốn, chạy scan mock và xem report để gửi feedback.
+            Chọn kịch bản mẫu, chỉnh thông tin nếu muốn, chạy scan và xem báo cáo kết quả.
           </p>
         </div>
         <div className="min-w-0 rounded-2xl border border-amber-300/20 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100">
           <div className="flex gap-3">
             <AlertTriangle className="mt-0.5 shrink-0" size={18} aria-hidden="true" />
-            <p className="min-w-0 break-words">Bản demo public. Không nhập production secret, token thật hoặc dữ liệu khách hàng thật.</p>
+            <p className="min-w-0 break-words">Môi trường dùng thử. Không nhập production secret, token thật hoặc dữ liệu khách hàng thật.</p>
           </div>
         </div>
       </div>
@@ -202,7 +202,7 @@ export default function NewScanPage() {
           </div>
 
           <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.035] p-4">
-            <p className="text-sm font-black text-white">Mục tiêu demo</p>
+            <p className="text-sm font-black text-white">Mục tiêu scan</p>
             <p className="mt-2 text-sm leading-6 text-slate-400">{form.appName}</p>
             <div className="mt-3 flex items-center gap-2 text-xs font-bold text-emerald-200">
               <Globe2 size={14} aria-hidden="true" />
@@ -215,7 +215,7 @@ export default function NewScanPage() {
           {step === 0 ? (
             <div>
               <h2 className="text-2xl font-black text-white">Thông tin app</h2>
-              <p className="mt-2 text-sm text-slate-400">Người test có thể dùng preset hoặc sửa nhanh thông tin demo.</p>
+              <p className="mt-2 text-sm text-slate-400">Có thể dùng preset hoặc chỉnh nhanh thông tin để tạo phiên scan.</p>
               <div className="mt-6 grid gap-5 md:grid-cols-2">
                 <FormField label="Tên app" name="appName">
                   <input className={inputClasses} onChange={(event) => updateField("appName", event.target.value)} value={form.appName} />
@@ -242,11 +242,11 @@ export default function NewScanPage() {
             <div>
               <h2 className="text-2xl font-black text-white">Mục tiêu test</h2>
               <div className="mt-6 space-y-5">
-                <FormField label="Endpoint URL hoặc mục tiêu demo" name="endpoint">
+                <FormField label="Endpoint URL hoặc mục tiêu scan" name="endpoint">
                   <input className={inputClasses} onChange={(event) => updateField("endpoint", event.target.value)} value={form.endpoint} />
                 </FormField>
                 <FormField label="API key/token tùy chọn" name="apiKey">
-                  <input className={inputClasses} onChange={(event) => updateField("apiKey", event.target.value)} placeholder="Để trống khi dùng bản demo" value={form.apiKey} />
+                  <input className={inputClasses} onChange={(event) => updateField("apiKey", event.target.value)} placeholder="Để trống nếu không cần xác thực" value={form.apiKey} />
                 </FormField>
                 <FormField label="Prompt hệ thống hoặc policy tùy chọn" name="systemPrompt">
                   <textarea className={`${inputClasses} min-h-28`} onChange={(event) => updateField("systemPrompt", event.target.value)} value={form.systemPrompt} />
@@ -295,7 +295,7 @@ export default function NewScanPage() {
               </div>
               <div className="mt-5 rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-4 text-sm leading-6 text-emerald-50">
                 <ShieldCheck className="mb-3 text-emerald-200" size={20} aria-hidden="true" />
-                Sau khi bấm chạy kiểm thử, demo sẽ chuyển sang tiến trình mock và mở báo cáo mẫu để người dùng gửi góp ý.
+                Sau khi bấm chạy scan, GreenShield sẽ hiển thị tiến trình kiểm thử và mở báo cáo mẫu để xem kết quả.
               </div>
             </div>
           ) : null}
@@ -311,7 +311,7 @@ export default function NewScanPage() {
                   Tiếp tục
                 </Button>
               ) : (
-                <Button onClick={runScan}>Chạy kiểm thử demo</Button>
+                <Button onClick={runScan}>Chạy scan</Button>
               )}
             </div>
           </div>

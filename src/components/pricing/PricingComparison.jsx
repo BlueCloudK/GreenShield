@@ -1,17 +1,17 @@
 import { CheckCircle2, Minus } from "lucide-react";
 
 const rows = [
-  { label: "Số lượt kiểm thử", key: "scanQuota", type: "text" },
+  { label: "Số lượt scan", key: "scanQuota", type: "text" },
   { label: "Mức báo cáo", key: "reportLevel", type: "text" },
-  { label: "Lượt kiểm thử lại", key: "retestCount", type: "text" },
+  { label: "Lượt retest", key: "retestCount", type: "text" },
   { label: "Đánh giá thủ công", key: "manualReview", type: "text" },
   {
-    label: "Red team tiêm lệnh prompt",
+    label: "Kiểm tra Prompt Injection",
     type: "feature",
     values: ["included", "included", "included", "included"],
   },
   {
-    label: "Đánh giá rò rỉ RAG",
+    label: "Đánh giá RAG Leakage",
     type: "feature",
     values: ["preview", "included", "included", "included"],
   },
@@ -26,7 +26,7 @@ const rows = [
     values: ["none", "none", "included", "included"],
   },
   {
-    label: "Xác minh sau khi sửa",
+    label: "Retest sau khi sửa",
     type: "feature",
     values: ["none", "included", "included", "included"],
   },
@@ -56,7 +56,7 @@ export function PricingComparison({ plans }) {
       <div className="border-b border-white/10 px-5 py-4">
         <h2 className="text-2xl font-black text-white">So sánh phạm vi dịch vụ</h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-          Phân biệt rõ gói kiểm thử tự động, gói assessment có bằng chứng, kiểm thử lại và phần review thủ công.
+          Phân biệt rõ gói scan tự động, gói assessment có bằng chứng, retest và phần review thủ công.
         </p>
       </div>
       <div className="max-w-full overflow-x-auto">

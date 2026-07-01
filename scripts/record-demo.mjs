@@ -258,50 +258,55 @@ async function main() {
   await injectDemoOverlay(page);
   await sleep(600);
 
-  await caption(page, "AI apps can leak data, ignore policies, and abuse tools.", 1900);
+  await caption(page, "AI app có thể rò rỉ dữ liệu, bỏ qua policy và lạm dụng tool.", 2100);
   await demoClick(page, page.getByTestId("header-login-link"));
 
-  await caption(page, "Sign in with the trial account to start a scan.", 1500);
+  await caption(page, "Đăng nhập tài khoản dùng thử để bắt đầu scan.", 1700);
   await fillField(page, page.locator('[name="email"]'), "admin@example.com");
   await fillField(page, page.locator('[name="password"]'), "admin123");
   await demoClick(page, page.getByTestId("login-submit"));
   await page.waitForURL("**/dashboard", { timeout: 12000 });
   await sleep(650);
 
-  await caption(page, "Track scans, risk scores, and retest status in one place.", 1900);
+  await caption(page, "Theo dõi phiên scan, điểm rủi ro và trạng thái retest.", 2100);
   await demoClick(page, page.getByTestId("dashboard-new-scan"));
   await page.waitForURL("**/scan/new", { timeout: 12000 });
   await sleep(650);
 
-  await caption(page, "Select the AI app and risk modules to test.", 1700);
+  await caption(page, "Chọn ứng dụng AI và các module rủi ro cần kiểm thử.", 1900);
   for (let step = 0; step < 3; step += 1) {
     await demoClick(page, page.getByTestId("scan-next-step"));
   }
 
-  await caption(page, "Run a focused security scan.", 1300);
+  await caption(page, "Chạy phiên scan bảo mật tập trung.", 1500);
   await demoClick(page, page.getByTestId("scan-run-button"));
   await page.waitForURL("**/scan/progress", { timeout: 12000 });
   await sleep(900);
 
-  await caption(page, "GreenShield runs probes across prompt, RAG, tool, and API risks.", 2300);
+  await caption(page, "GreenShield kiểm tra prompt, RAG, tool và API risk.", 2300);
   await sleep(1200);
   await demoClick(page, page.getByTestId("progress-open-report"));
   await page.waitForURL("**/reports/scan-gs-001", { timeout: 12000 });
   await sleep(850);
 
-  await caption(page, "Review risk score, attack evidence, and fix priority.", 2100);
+  await softScroll(page, 0);
+  await caption(page, "Báo cáo mở đầu bằng điểm rủi ro, tóm tắt và ưu tiên sửa.", 2400);
+  await demoClick(page, page.getByTestId("report-top-retest"));
+  await caption(page, "Có thể chạy retest sau khi đội kỹ thuật đã sửa lỗi.", 1900);
+  await softScroll(page, 430);
+  await caption(page, "Chọn từng finding để xem bằng chứng và hướng xử lý.", 1900);
   await demoClick(page, page.getByTestId("finding-finding-002"));
-  await caption(page, "Each finding includes what happened, evidence, impact, and the next fix.", 2300);
+  await caption(page, "Mỗi finding có hành vi xảy ra, bằng chứng, tác động và hướng fix.", 2400);
   await demoClick(page, page.getByTestId("finding-detail-retest"));
-  await caption(page, "Fix the highest-risk issue first, then retest.", 1700);
+  await caption(page, "Sửa lỗi ưu tiên cao trước, sau đó retest để xác nhận.", 1900);
 
   await page.goto(`${APP_URL.replace(/\/$/, "")}/products`, { waitUntil: "networkidle" });
   await injectDemoOverlay(page);
   await softScroll(page, 120);
-  await caption(page, "Choose a scan package or request an AI security assessment.", 2100);
+  await caption(page, "Chọn gói scan hoặc yêu cầu assessment bảo mật AI.", 2100);
   await demoClick(page, page.getByTestId("pricing-request-assessment"));
   await sleep(900);
-  await caption(page, "GreenShield helps teams ship safer LLM, RAG, and agent systems.", 2200);
+  await caption(page, "GreenShield giúp đội AI triển khai LLM, RAG và agent an toàn hơn.", 2300);
 
   const video = page.video();
   await page.close();

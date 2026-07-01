@@ -139,10 +139,10 @@ export default function HomePage() {
   const { isAuthenticated } = useAuth();
   const scanRoute = isAuthenticated ? "/scan/new" : "/login";
   const scanState = isAuthenticated ? undefined : { from: { pathname: "/scan/new" } };
-  const primaryActionLabel = isAuthenticated ? "Tạo phiên kiểm thử" : "Đăng nhập để kiểm thử";
+  const primaryActionLabel = isAuthenticated ? "Tạo scan mới" : "Đăng nhập để scan";
   const helperText = isAuthenticated
-    ? "Bạn đang đăng nhập demo. Tạo phiên kiểm thử mới để đi qua wizard, tiến trình và báo cáo kết quả."
-    : "Kiểm thử cần đăng nhập demo để lưu phiên. Báo cáo mẫu có thể xem công khai.";
+    ? "Bạn đang đăng nhập demo. Tạo scan mới để đi qua wizard, progress và report kết quả."
+    : "Scan cần đăng nhập demo để lưu phiên. Demo report có thể xem công khai.";
 
   return (
     <main className="overflow-hidden">
@@ -153,13 +153,13 @@ export default function HomePage() {
         <div className="relative mx-auto grid w-full max-w-[1580px] gap-10 px-4 py-10 sm:px-6 sm:py-12 lg:min-h-[560px] lg:grid-cols-[minmax(0,1.08fr)_minmax(460px,0.92fr)] lg:items-center lg:gap-20 lg:px-10 lg:py-10">
           <div className="max-w-[700px]">
             <span className="inline-flex rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1.5 text-sm font-bold text-emerald-100">
-              Đánh giá bảo mật AI cho LLM, RAG và agent
+              AI security assessment cho LLM, RAG và agent
             </span>
             <h1 className="mt-5 break-words text-4xl font-black leading-[0.98] tracking-tight text-white sm:text-6xl lg:text-[4.5rem]">
-              Red team ứng dụng AI trước khi bị khai thác
+              Scan rủi ro LLM, RAG và AI agent trước khi public
             </h1>
             <p className="mt-6 max-w-2xl break-words text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
-              GreenShield kiểm thử tiêm lệnh prompt, rò rỉ RAG, gọi tool rủi ro, lộ API và lỗ hổng guardrail. Kết quả đi kèm điểm rủi ro, bằng chứng, hướng sửa và kiểm thử lại.
+              GreenShield kiểm tra prompt injection, RAG leakage, unsafe tool use và API exposure. Kết quả có risk score, bằng chứng tấn công, hướng fix và retest.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button className="w-full px-6 py-3 sm:w-fit" state={scanState} to={scanRoute}>

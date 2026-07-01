@@ -90,7 +90,7 @@ export default function ScanProgressPage() {
         </div>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Button to="/reports/scan-gs-001">Mở báo cáo</Button>
+          <Button data-testid="progress-open-report" to="/reports/scan-gs-001">Mở báo cáo</Button>
           <Link className="focus-ring inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/10" to="/scan/new">
             Tạo scan khác
           </Link>

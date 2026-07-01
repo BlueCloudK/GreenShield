@@ -144,11 +144,11 @@ export default function ReportPage() {
           </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button className="px-3 py-2 text-xs" variant="secondary">
+          <Button className="px-3 py-2 text-xs" data-testid="report-top-retest" variant="secondary">
             <RefreshCw size={17} aria-hidden="true" />
             Chạy retest
           </Button>
-          <Button className="px-3 py-2 text-xs" variant="secondary">
+          <Button className="px-3 py-2 text-xs" data-testid="report-export" variant="secondary">
             <Download size={17} aria-hidden="true" />
             Xuất báo cáo
           </Button>

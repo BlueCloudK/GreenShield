@@ -79,7 +79,7 @@ export default function LoginPage() {
           </FormField>
         </div>
         {error ? <p className="mt-4 rounded-2xl bg-rose-400/10 p-3 text-sm text-rose-200">{error}</p> : null}
-        <Button className="mt-6 w-full" type="submit">
+        <Button className="mt-6 w-full" data-testid="login-submit" type="submit">
           Đăng nhập
         </Button>
       </form>

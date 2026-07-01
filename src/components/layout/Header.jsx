@@ -67,12 +67,12 @@ export function Header() {
         </nav>
 
         <div className="ml-auto hidden shrink-0 items-center gap-3 lg:flex">
-          <Button state={scanState} to={scanRoute}>
+          <Button data-testid="header-primary-cta" state={scanState} to={scanRoute}>
             {primaryActionLabel}
           </Button>
           {user ? (
             <>
-              <Button to="/dashboard" variant="secondary">
+              <Button data-testid="header-dashboard-link" to="/dashboard" variant="secondary">
                 Dashboard
               </Button>
               <Button onClick={handleLogout} variant="ghost">
@@ -80,7 +80,7 @@ export function Header() {
               </Button>
             </>
           ) : (
-            <Button to="/login" variant="ghost">Đăng nhập</Button>
+            <Button data-testid="header-login-link" to="/login" variant="ghost">Đăng nhập</Button>
           )}
         </div>
 

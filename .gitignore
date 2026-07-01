@@ -16,6 +16,8 @@ pnpm-debug.log*
 coverage/
 playwright-report/
 test-results/
+artifacts/demo/*
+!artifacts/demo/.gitkeep
 
 .agents/
 .codex/

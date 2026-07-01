@@ -137,7 +137,7 @@ export function FindingDetail({ finding }) {
             ))}
           </div>
 
-          <Button className="w-full px-3 py-2 text-xs" variant="secondary">
+          <Button className="w-full px-3 py-2 text-xs" data-testid="finding-detail-retest" variant="secondary">
             <RefreshCw size={17} aria-hidden="true" />
             Chạy retest
           </Button>

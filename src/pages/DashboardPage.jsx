@@ -25,7 +25,7 @@ export default function DashboardPage() {
           title="Trung tâm scan bảo mật AI"
           description="Tạo phiên scan, xem điểm rủi ro, đọc bằng chứng tấn công và theo dõi retest sau khi sửa."
         />
-        <Button className="w-fit" to="/scan/new">
+        <Button className="w-fit" data-testid="dashboard-new-scan" to="/scan/new">
           <ScanLine size={17} aria-hidden="true" />
           Tạo scan mới
         </Button>
@@ -53,7 +53,7 @@ export default function DashboardPage() {
                 <p className="section-kicker">Phiên gần đây</p>
                 <h2 className="mt-2 text-3xl font-black text-white">Phiên scan gần đây</h2>
               </div>
-              <Button to="/reports/scan-gs-001" variant="secondary">
+              <Button data-testid="dashboard-demo-report" to="/reports/scan-gs-001" variant="secondary">
                 Xem báo cáo mẫu
               </Button>
             </div>

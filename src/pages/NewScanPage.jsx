@@ -307,11 +307,11 @@ export default function NewScanPage() {
             <div className="flex flex-col items-start gap-2 sm:items-end">
               {validationHint ? <p className="text-sm text-amber-200">{validationHint}</p> : null}
               {step < steps.length - 1 ? (
-                <Button disabled={!canContinue} onClick={nextStep}>
+                <Button data-testid="scan-next-step" disabled={!canContinue} onClick={nextStep}>
                   Tiếp tục
                 </Button>
               ) : (
-                <Button onClick={runScan}>Chạy scan</Button>
+                <Button data-testid="scan-run-button" onClick={runScan}>Chạy scan</Button>
               )}
             </div>
           </div>

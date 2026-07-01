@@ -15,6 +15,7 @@ export function FindingList({ findings, onSelect, selectedId }) {
             className={`focus-ring block w-full px-3 py-3 text-left transition ${
               selectedId === finding.id ? "bg-emerald-300/[0.08]" : "hover:bg-white/[0.035]"
             }`}
+            data-testid={`finding-${finding.id}`}
             key={finding.id}
             onClick={() => onSelect(finding.id)}
             type="button"

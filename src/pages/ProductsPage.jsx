@@ -15,7 +15,7 @@ export default function ProductsPage() {
           title="Dịch vụ và gói kiểm thử bảo mật AI"
           description="Các gói GreenShield tập trung vào ứng dụng LLM, pipeline RAG và AI agent: scan rủi ro, bằng chứng tấn công, hướng fix và retest sau khi khắc phục."
         />
-        <Button className="w-full sm:w-fit" to="/contact">Yêu cầu assessment</Button>
+        <Button className="w-full sm:w-fit" data-testid="pricing-request-assessment" to="/contact">Yêu cầu assessment</Button>
       </div>
 
       <div className="mt-10 grid grid-cols-1 items-stretch gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -67,7 +67,7 @@ export default function ProductsPage() {
                 <span className="font-bold text-white">Review thủ công:</span> {plan.manualReview}
               </p>
             </div>
-            <Button className="mt-4 w-full" to={plan.name === "Project Assessment" ? "/contact" : "/scan/new"} variant={plan.name === "Project Assessment" ? "secondary" : "primary"}>
+            <Button className="mt-4 w-full" data-testid={`pricing-plan-${pricingPlans.indexOf(plan) + 1}`} to={plan.name === "Project Assessment" ? "/contact" : "/scan/new"} variant={plan.name === "Project Assessment" ? "secondary" : "primary"}>
               {plan.ctaLabel}
             </Button>
           </article>

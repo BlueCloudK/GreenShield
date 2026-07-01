@@ -162,10 +162,10 @@ export default function HomePage() {
               GreenShield kiểm tra prompt injection, RAG leakage, unsafe tool use và API exposure. Kết quả có risk score, bằng chứng tấn công, hướng fix và retest.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button className="w-full px-6 py-3 sm:w-fit" state={scanState} to={scanRoute}>
+              <Button className="w-full px-6 py-3 sm:w-fit" data-testid="home-start-scan" state={scanState} to={scanRoute}>
                 {primaryActionLabel}
               </Button>
-              <Button className="w-full px-6 py-3 sm:w-fit" to="/reports/scan-gs-001" variant="secondary">
+              <Button className="w-full px-6 py-3 sm:w-fit" data-testid="home-demo-report" to="/reports/scan-gs-001" variant="secondary">
                 Xem báo cáo mẫu
               </Button>
             </div>

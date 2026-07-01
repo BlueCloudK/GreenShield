@@ -67,6 +67,9 @@ export default function ProductsPage() {
                 <span className="font-bold text-white">Review thủ công:</span> {plan.manualReview}
               </p>
             </div>
+            <Button className="mt-4 w-full" to={plan.name === "Project Assessment" ? "/contact" : "/scan/new"} variant={plan.name === "Project Assessment" ? "secondary" : "primary"}>
+              {plan.ctaLabel}
+            </Button>
           </article>
         ))}
       </div>

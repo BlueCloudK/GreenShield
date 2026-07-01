@@ -154,6 +154,7 @@ export const pricingPlans = [
     reportLevel: "Xem trước",
     retestCount: "0",
     manualReview: "Không",
+    ctaLabel: "Bắt đầu miễn phí",
   },
   {
     name: "RAG & Agent Assessment",
@@ -165,6 +166,7 @@ export const pricingPlans = [
     reportLevel: "Tiêu chuẩn",
     retestCount: "3",
     manualReview: "Không",
+    ctaLabel: "Chọn gói này",
   },
   {
     name: "AI Red Team Sprint",
@@ -176,16 +178,18 @@ export const pricingPlans = [
     reportLevel: "Báo cáo đội nhóm",
     retestCount: "10",
     manualReview: "Tùy chọn",
+    ctaLabel: "Chọn gói này",
   },
   {
     name: "Project Assessment",
     targetUser: "Startup và SME Việt Nam",
-    price: "Theo báo giá",
-    priceNote: "theo phạm vi dự án",
+    price: "Liên hệ",
+    priceNote: "báo giá theo phạm vi",
     features: ["Assessment bảo mật AI", "Review thủ công bởi chuyên gia", "Báo cáo tổng quan cho quản lý", "Phiên kiểm thử lại"],
     scanQuota: "Theo phạm vi",
     reportLevel: "Assessment chuyên sâu",
     retestCount: "Theo phạm vi",
     manualReview: "Có",
+    ctaLabel: "Liên hệ tư vấn",
   },
 ];

@@ -8,21 +8,15 @@ Action: Open the GreenShield landing page and show the product positioning.
 
 ## Scene 2: Start scan
 
-Caption: Bắt đầu một phiên scan bảo mật AI.
+Caption: Bắt đầu bằng một phiên scan bảo mật AI.
 
-Action: Click the primary CTA and sign in with the trial account.
-
-## Scene 3: Security console
-
-Caption: Theo dõi phiên scan, điểm rủi ro và trạng thái retest.
-
-Action: Open the dashboard and click New Scan.
+Action: Click the primary CTA from the landing page. The recorder seeds the trial session before recording, so the customer video does not show the login step.
 
 ## Scene 4: Configure target
 
-Caption: Chọn ứng dụng AI và các module rủi ro cần kiểm thử.
+Caption: Chọn ứng dụng mục tiêu và các module rủi ro cần kiểm thử.
 
-Action: Step through the scan wizard and run the scan.
+Action: Step through the scan wizard, pause on the risk module selection, then run the scan.
 
 ## Scene 5: Scan progress
 

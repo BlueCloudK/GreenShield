@@ -206,6 +206,11 @@ async function softScroll(page, y) {
   await sleep(800);
 }
 
+async function demoHover(page, locator) {
+  await moveTo(page, locator);
+  await sleep(700);
+}
+
 async function convertToMp4IfRequested() {
   if (!wantsMp4) return;
 
@@ -252,6 +257,12 @@ async function main() {
       size: VIEWPORT,
     },
   });
+  await context.addInitScript(() => {
+    window.localStorage.setItem(
+      "greenshield.auth",
+      JSON.stringify({ name: "GreenShield Admin", email: "admin@example.com" }),
+    );
+  });
 
   const page = await context.newPage();
   await waitForApp(page);
@@ -259,24 +270,22 @@ async function main() {
   await sleep(600);
 
   await caption(page, "AI app có thể rò rỉ dữ liệu, bỏ qua policy và lạm dụng tool.", 2100);
-  await demoClick(page, page.getByTestId("header-login-link"));
-
-  await caption(page, "Đăng nhập tài khoản dùng thử để bắt đầu scan.", 1700);
-  await fillField(page, page.locator('[name="email"]'), "admin@example.com");
-  await fillField(page, page.locator('[name="password"]'), "admin123");
-  await demoClick(page, page.getByTestId("login-submit"));
-  await page.waitForURL("**/dashboard", { timeout: 12000 });
-  await sleep(650);
-
-  await caption(page, "Theo dõi phiên scan, điểm rủi ro và trạng thái retest.", 2100);
-  await demoClick(page, page.getByTestId("dashboard-new-scan"));
+  await caption(page, "Bắt đầu bằng một phiên scan bảo mật AI.", 1600);
+  await demoClick(page, page.getByTestId("home-start-scan"));
   await page.waitForURL("**/scan/new", { timeout: 12000 });
   await sleep(650);
 
-  await caption(page, "Chọn ứng dụng AI và các module rủi ro cần kiểm thử.", 1900);
-  for (let step = 0; step < 3; step += 1) {
+  await caption(page, "Chọn ứng dụng mục tiêu và môi trường cần kiểm thử.", 1800);
+  for (let step = 0; step < 2; step += 1) {
     await demoClick(page, page.getByTestId("scan-next-step"));
   }
+
+  await caption(page, "Chọn module rủi ro: Prompt Injection, RAG Leakage, Tool Abuse và API Exposure.", 2600);
+  await demoHover(page, page.getByTestId("risk-module-prompt-injection"));
+  await demoHover(page, page.getByTestId("risk-module-rag-data-leakage"));
+  await demoHover(page, page.getByTestId("risk-module-unsafe-tool-calls"));
+  await caption(page, "Module được chọn sẽ quyết định bằng chứng và checklist retest trong report.", 2400);
+  await demoClick(page, page.getByTestId("scan-next-step"));
 
   await caption(page, "Chạy phiên scan bảo mật tập trung.", 1500);
   await demoClick(page, page.getByTestId("scan-run-button"));

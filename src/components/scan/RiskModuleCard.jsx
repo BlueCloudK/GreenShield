@@ -1,6 +1,10 @@
 import { CheckCircle2 } from "lucide-react";
 import { getModuleLabel } from "../../utils/reportLabels";
 
+function toTestId(value) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
 export function RiskModuleCard({ module, selected, onToggle }) {
   return (
     <button
@@ -9,6 +13,7 @@ export function RiskModuleCard({ module, selected, onToggle }) {
           ? "border-emerald-300/45 bg-emerald-300/10 shadow-[0_0_32px_rgba(74,222,128,0.12)]"
           : "border-white/10 bg-white/[0.045] hover:border-emerald-300/30"
       }`}
+      data-testid={`risk-module-${toTestId(module)}`}
       onClick={onToggle}
       type="button"
     >

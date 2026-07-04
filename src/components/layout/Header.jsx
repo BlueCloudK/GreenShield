@@ -1,5 +1,6 @@
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { flushSync } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { GreenShieldLogo } from "../brand/GreenShieldLogo";
@@ -36,9 +37,11 @@ export function Header() {
   }
 
   function handleLogout() {
-    logout();
+    flushSync(() => {
+      logout();
+    });
     setMenuOpen(false);
-    navigate("/");
+    navigate("/login?mode=login", { replace: true, state: { skipAuthRedirect: true } });
   }
 
   function handleNavClick() {

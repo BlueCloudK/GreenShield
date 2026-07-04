@@ -89,9 +89,9 @@ http://YOUR_IPV4:8080
 
 ## Demo account
 
-Use the **Đăng ký nhanh** flow on `/login` to create a local demo account.
-The account and session are stored in browser `localStorage` only, so this is
-not production authentication.
+Use the **Đăng ký nhanh** flow on `/login` to create a local demo account, then
+log in with that email and password. The account and session are stored in
+browser `localStorage` only, so this is not production authentication.
 
 Only the dashboard, new scan wizard, and scan progress are protected in the
 MVP. Overview, Demo Report, and Pricing remain public for low-friction demos.

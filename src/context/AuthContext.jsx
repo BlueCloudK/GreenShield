@@ -65,14 +65,14 @@ export function AuthProvider({ children }) {
     };
 
     writeStorage(DEMO_USERS_KEY, [...users, nextUser]);
-    setUser({
-      name: nextUser.name,
-      email: nextUser.email,
-      company: nextUser.company,
-    });
 
     return {
       ok: true,
+      user: {
+        name: nextUser.name,
+        email: nextUser.email,
+        company: nextUser.company,
+      },
     };
   }
 

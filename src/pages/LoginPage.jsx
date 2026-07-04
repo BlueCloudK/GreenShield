@@ -26,16 +26,23 @@ export default function LoginPage() {
   const [registerForm, setRegisterForm] = useState(initialRegisterForm);
   const [loginForm, setLoginForm] = useState(initialLoginForm);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const { isAuthenticated, login, register } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTo = location.state?.from?.pathname || "/dashboard";
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !location.state?.skipAuthRedirect) {
       navigate(redirectTo, { replace: true });
     }
-  }, [isAuthenticated, navigate, redirectTo]);
+  }, [isAuthenticated, location.state?.skipAuthRedirect, navigate, redirectTo]);
+
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get("mode") === "login" || location.state?.authMode === "login") {
+      setMode("login");
+    }
+  }, [location.search, location.state?.authMode]);
 
   const registerErrors = useMemo(() => {
     const errors = {};
@@ -55,16 +62,19 @@ export default function LoginPage() {
   function updateRegister(field, value) {
     setRegisterForm((current) => ({ ...current, [field]: value }));
     setError("");
+    setSuccess("");
   }
 
   function updateLogin(field, value) {
     setLoginForm((current) => ({ ...current, [field]: value }));
     setError("");
+    setSuccess("");
   }
 
   function switchMode(nextMode) {
     setMode(nextMode);
     setError("");
+    setSuccess("");
   }
 
   function handleRegister(event) {
@@ -79,7 +89,16 @@ export default function LoginPage() {
     const result = register(registerForm);
     if (!result.ok) {
       setError(result.message);
+      return;
     }
+
+    setLoginForm({
+      email: registerForm.email.trim().toLowerCase(),
+      password: registerForm.password,
+    });
+    setRegisterForm(initialRegisterForm);
+    setMode("login");
+    setSuccess("Tài khoản demo đã được tạo. Kiểm tra lại email/mật khẩu rồi bấm Đăng nhập để vào dashboard.");
   }
 
   function handleLogin(event) {
@@ -114,7 +133,7 @@ export default function LoginPage() {
           {isRegisterMode ? "Tạo tài khoản dùng thử" : "Đăng nhập GreenShield"}
         </h1>
         <p className="mt-4 leading-7 text-slate-400">
-          Tạo nhanh một tài khoản demo để vào dashboard, chạy phiên scan và xem report bảo mật AI. Tài khoản chỉ lưu trong trình duyệt bằng localStorage, chưa phải auth production.
+          Tạo nhanh một tài khoản demo, sau đó đăng nhập để vào dashboard, chạy phiên scan và xem report bảo mật AI. Tài khoản chỉ lưu trong trình duyệt bằng localStorage, chưa phải auth production.
         </p>
         <div className="mt-8 grid gap-3">
           {[
@@ -164,7 +183,7 @@ export default function LoginPage() {
               </FormField>
               <FormField error={registerErrors.email} label="Email công việc" name="email">
                 <input
-                  autoComplete="email"
+                  autoComplete="username"
                   className={inputClasses}
                   inputMode="email"
                   name="email"
@@ -197,28 +216,28 @@ export default function LoginPage() {
             </div>
             {error ? <p className="mt-4 rounded-2xl bg-rose-400/10 p-3 text-sm text-rose-200">{error}</p> : null}
             <Button className="mt-6 w-full" data-testid="register-submit" type="submit">
-              Tạo tài khoản và vào demo
+              Tạo tài khoản demo
             </Button>
           </form>
         ) : (
           <form className="mt-6" onSubmit={handleLogin}>
             <div className="space-y-5">
-              <FormField error={loginErrors.email} label="Email" name="loginEmail">
+              <FormField error={loginErrors.email} label="Email" name="email">
                 <input
-                  autoComplete="email"
+                  autoComplete="username"
                   className={inputClasses}
                   inputMode="email"
-                  name="loginEmail"
+                  name="email"
                   onChange={(event) => updateLogin("email", event.target.value)}
                   placeholder="Email đã đăng ký demo"
                   value={loginForm.email}
                 />
               </FormField>
-              <FormField error={loginErrors.password} label="Mật khẩu" name="loginPassword">
+              <FormField error={loginErrors.password} label="Mật khẩu" name="password">
                 <input
                   autoComplete="current-password"
                   className={inputClasses}
-                  name="loginPassword"
+                  name="password"
                   onChange={(event) => updateLogin("password", event.target.value)}
                   placeholder="Mật khẩu demo"
                   type="password"
@@ -226,6 +245,7 @@ export default function LoginPage() {
                 />
               </FormField>
             </div>
+            {success ? <p className="mt-4 rounded-2xl bg-emerald-300/10 p-3 text-sm text-emerald-100">{success}</p> : null}
             {error ? <p className="mt-4 rounded-2xl bg-rose-400/10 p-3 text-sm text-rose-200">{error}</p> : null}
             <Button className="mt-6 w-full" data-testid="login-submit" type="submit">
               Đăng nhập

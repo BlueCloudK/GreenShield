@@ -1,6 +1,4 @@
-import { RefreshCw } from "lucide-react";
 import { SeverityBadge } from "./SeverityBadge";
-import { Button } from "../ui/Button";
 import { maskSensitiveText } from "../../utils/maskSensitiveText";
 import { getCategoryLabel, getRetestStatusLabel } from "../../utils/reportLabels";
 
@@ -137,10 +135,6 @@ export function FindingDetail({ finding }) {
             ))}
           </div>
 
-          <Button className="w-full px-3 py-2 text-xs" data-testid="finding-detail-retest" variant="secondary">
-            <RefreshCw size={17} aria-hidden="true" />
-            Chạy retest
-          </Button>
         </aside>
       </div>
     </article>

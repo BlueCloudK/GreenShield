@@ -11,6 +11,29 @@ const appTypes = ["Chatbot", "RAG System", "AI Agent", "AI API"];
 const environments = ["Demo", "Staging", "Production"];
 const steps = ["Thông tin app", "Mục tiêu test", "Module rủi ro", "Xác nhận"];
 
+const scanTypes = [
+  {
+    title: "Prompt Injection Scan",
+    description: "Kiểm tra jailbreak, prompt override và policy bypass trong chatbot hoặc LLM app.",
+    icon: ShieldCheck,
+  },
+  {
+    title: "RAG Leakage Scan",
+    description: "Đánh giá retrieval poisoning, truy xuất sai quyền và rò rỉ tài liệu nhạy cảm.",
+    icon: DatabaseZap,
+  },
+  {
+    title: "Agent / Tool Abuse Scan",
+    description: "Kiểm tra tool call rủi ro, approval flow và quyền agent quá rộng.",
+    icon: Workflow,
+  },
+  {
+    title: "API / Key Exposure Scan",
+    description: "Tìm dấu hiệu lộ API, token, log nhạy cảm và endpoint có thể bị abuse.",
+    icon: Globe2,
+  },
+];
+
 const demoPresets = [
   {
     title: "RAG nội bộ",
@@ -163,6 +186,33 @@ export default function NewScanPage() {
           );
         })}
       </div>
+
+      <section className="mt-6 rounded-2xl border border-white/10 bg-slate-950/50 p-4 sm:p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-300">Các loại scan</p>
+            <h2 className="mt-1 text-xl font-black text-white">Chọn kịch bản theo bề mặt tấn công AI</h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-6 text-slate-400">
+            Mỗi phiên scan có thể kết hợp nhiều module để tạo risk score, bằng chứng tấn công, hướng fix và checklist retest.
+          </p>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {scanTypes.map((type) => {
+            const Icon = type.icon;
+
+            return (
+              <article className="rounded-2xl border border-white/10 bg-white/[0.035] p-4" key={type.title}>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-300/10 text-emerald-200">
+                  <Icon size={18} aria-hidden="true" />
+                </div>
+                <h3 className="mt-3 text-sm font-black text-white">{type.title}</h3>
+                <p className="mt-2 text-xs leading-5 text-slate-400">{type.description}</p>
+              </article>
+            );
+          })}
+        </div>
+      </section>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[280px_1fr]">
         <aside className="h-fit rounded-2xl border border-white/10 bg-slate-950/55 p-4 lg:sticky lg:top-24">

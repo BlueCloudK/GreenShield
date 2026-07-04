@@ -83,6 +83,7 @@ export default function ReportPage() {
   const categories = useMemo(() => ["All", ...new Set(findings.map((finding) => finding.category))], [findings]);
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedFindingId, setSelectedFindingId] = useState(findings[0]?.id || "");
+  const [retestNotice, setRetestNotice] = useState("");
 
   const filteredFindings = useMemo(
     () => (activeCategory === "All" ? findings : findings.filter((finding) => finding.category === activeCategory)),
@@ -98,6 +99,10 @@ export default function ReportPage() {
     const nextFindings = category === "All" ? findings : findings.filter((finding) => finding.category === category);
     setActiveCategory(category);
     setSelectedFindingId(nextFindings[0]?.id || "");
+  }
+
+  function runRetest() {
+    setRetestNotice("Đã tạo yêu cầu retest. GreenShield sẽ chạy lại các module rủi ro sau khi bản sửa được áp dụng.");
   }
 
   if (!scan) {
@@ -144,7 +149,7 @@ export default function ReportPage() {
           </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button className="px-3 py-2 text-xs" data-testid="report-top-retest" variant="secondary">
+          <Button className="px-3 py-2 text-xs" data-testid="report-top-retest" onClick={runRetest} variant="secondary">
             <RefreshCw size={17} aria-hidden="true" />
             Chạy retest
           </Button>
@@ -154,6 +159,11 @@ export default function ReportPage() {
           </Button>
         </div>
       </div>
+      {retestNotice ? (
+        <div className="mt-4 rounded-2xl border border-emerald-300/25 bg-emerald-300/10 px-4 py-3 text-sm font-semibold text-emerald-100">
+          {retestNotice}
+        </div>
+      ) : null}
 
       <section className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/55">
         <div className="grid min-w-0 divide-y divide-white/10 lg:grid-cols-[240px_minmax(0,1fr)_300px] lg:divide-x lg:divide-y-0">

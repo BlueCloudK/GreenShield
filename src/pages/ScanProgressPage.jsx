@@ -1,4 +1,4 @@
-import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { CheckCircle2, ShieldCheck } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { SectionHeader } from "../components/ui/SectionHeader";
@@ -46,19 +46,14 @@ export default function ScanProgressPage() {
         ) : null}
 
         <div className="space-y-4">
-          {progressSteps.map((step, index) => {
-            const complete = index < 4;
+          {progressSteps.map((step) => {
             return (
               <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-slate-950/45 p-4" key={step}>
-                {complete ? (
-                  <CheckCircle2 className="text-emerald-300" size={22} aria-hidden="true" />
-                ) : (
-                  <Loader2 className="animate-spin text-cyan-200" size={22} aria-hidden="true" />
-                )}
+                <CheckCircle2 className="text-emerald-300" size={22} aria-hidden="true" />
                 <div className="flex-1">
                   <p className="font-bold text-white">{step}</p>
                   <div className="mt-2 h-1.5 rounded-full bg-slate-800">
-                    <div className={`h-1.5 rounded-full bg-emerald-300 ${complete ? "w-full" : "w-2/3"}`} />
+                    <div className="h-1.5 w-full rounded-full bg-emerald-300" />
                   </div>
                 </div>
               </div>
@@ -81,9 +76,9 @@ export default function ScanProgressPage() {
           <div className="flex gap-3">
             <ShieldCheck className="mt-0.5 shrink-0 text-cyan-200" size={20} aria-hidden="true" />
             <div>
-              <h2 className="font-black text-white">Bước tiếp theo</h2>
+              <h2 className="font-black text-white">Báo cáo đã sẵn sàng</h2>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                Mở báo cáo để xem điểm rủi ro, bằng chứng tấn công, hướng fix và checklist retest.
+                Phiên scan đã hoàn tất. Mở báo cáo để xem điểm rủi ro, bằng chứng tấn công, hướng fix và checklist retest.
               </p>
             </div>
           </div>

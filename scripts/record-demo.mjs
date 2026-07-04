@@ -97,15 +97,15 @@ async function injectDemoOverlay(page) {
       .demo-caption {
         position: fixed;
         left: 50%;
-        bottom: 34px;
-        max-width: min(860px, calc(100vw - 48px));
+        bottom: 86px;
+        max-width: min(780px, calc(100vw - 48px));
         transform: translateX(-50%) translateY(14px);
-        padding: 12px 18px;
+        padding: 10px 16px;
         border: 1px solid rgba(255,255,255,.14);
         border-radius: 999px;
         background: rgba(3, 7, 18, .84);
         color: white;
-        font: 750 18px/1.35 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font: 750 16px/1.35 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         letter-spacing: 0;
         text-align: center;
         z-index: 2147483645;
@@ -203,12 +203,12 @@ async function softScroll(page, y) {
   await page.evaluate((targetY) => {
     window.scrollTo({ top: targetY, behavior: "smooth" });
   }, y);
-  await sleep(800);
+  await sleep(620);
 }
 
 async function demoHover(page, locator) {
   await moveTo(page, locator);
-  await sleep(700);
+  await sleep(460);
 }
 
 async function convertToMp4IfRequested() {
@@ -267,55 +267,61 @@ async function main() {
   const page = await context.newPage();
   await waitForApp(page);
   await injectDemoOverlay(page);
-  await sleep(600);
+  await sleep(450);
 
-  await caption(page, "AI app có thể rò rỉ dữ liệu, bỏ qua policy và lạm dụng tool.", 2100);
-  await caption(page, "Bắt đầu bằng một phiên scan bảo mật AI.", 1600);
+  await caption(page, "GreenShield kiểm thử bảo mật cho LLM, RAG và AI agent trước khi triển khai.", 2600);
   await demoClick(page, page.getByTestId("home-start-scan"));
   await page.waitForURL("**/scan/new", { timeout: 12000 });
-  await sleep(650);
+  await sleep(450);
 
-  await caption(page, "Chọn ứng dụng mục tiêu và môi trường cần kiểm thử.", 1800);
+  await caption(page, "Chọn kịch bản scan: RAG nội bộ, AI agent hoặc chatbot công khai.", 2500);
+  await softScroll(page, 300);
+  await caption(page, "Mỗi phiên scan có thể bật hoặc tắt các module rủi ro cần kiểm thử.", 2900);
+  await softScroll(page, 520);
+  await sleep(280);
+
+  await caption(page, "Điền mục tiêu kiểm thử và chọn module rủi ro.", 2400);
   for (let step = 0; step < 2; step += 1) {
     await demoClick(page, page.getByTestId("scan-next-step"));
   }
 
-  await caption(page, "Chọn module rủi ro: Prompt Injection, RAG Leakage, Tool Abuse và API Exposure.", 2600);
-  await demoHover(page, page.getByTestId("risk-module-prompt-injection"));
-  await demoHover(page, page.getByTestId("risk-module-rag-data-leakage"));
-  await demoHover(page, page.getByTestId("risk-module-unsafe-tool-calls"));
-  await caption(page, "Module được chọn sẽ quyết định bằng chứng và checklist retest trong report.", 2400);
+  await caption(page, "Có thể bỏ chọn module chưa cần test, hoặc chọn lại khi muốn đưa vào report.", 3100);
+  await demoClick(page, page.getByTestId("risk-module-unsafe-tool-calls"));
+  await sleep(650);
+  await demoClick(page, page.getByTestId("risk-module-unsafe-tool-calls"));
+  await caption(page, "Module được chọn sẽ quyết định bằng chứng và checklist retest trong report.", 3000);
   await demoClick(page, page.getByTestId("scan-next-step"));
 
-  await caption(page, "Chạy phiên scan bảo mật tập trung.", 1500);
+  await caption(page, "Chạy phiên scan bảo mật tập trung.", 2200);
   await demoClick(page, page.getByTestId("scan-run-button"));
   await page.waitForURL("**/scan/progress", { timeout: 12000 });
-  await sleep(900);
+  await sleep(600);
 
-  await caption(page, "GreenShield kiểm tra prompt, RAG, tool và API risk.", 2300);
-  await sleep(1200);
+  await caption(page, "GreenShield chạy probe, thu thập bằng chứng và tạo report.", 2700);
+  await sleep(550);
   await demoClick(page, page.getByTestId("progress-open-report"));
   await page.waitForURL("**/reports/scan-gs-001", { timeout: 12000 });
-  await sleep(850);
+  await sleep(600);
 
   await softScroll(page, 0);
-  await caption(page, "Báo cáo mở đầu bằng điểm rủi ro, tóm tắt và ưu tiên sửa.", 2400);
-  await demoClick(page, page.getByTestId("report-top-retest"));
-  await caption(page, "Có thể chạy retest sau khi đội kỹ thuật đã sửa lỗi.", 1900);
-  await softScroll(page, 430);
-  await caption(page, "Chọn từng finding để xem bằng chứng và hướng xử lý.", 1900);
+  await caption(page, "Report mở đầu bằng điểm rủi ro, câu chuyện bảo mật và lỗi cần sửa trước.", 3200);
+  await softScroll(page, 410);
+  await caption(page, "Chọn từng finding để xem bằng chứng tấn công và hướng xử lý.", 2700);
   await demoClick(page, page.getByTestId("finding-finding-002"));
-  await caption(page, "Mỗi finding có hành vi xảy ra, bằng chứng, tác động và hướng fix.", 2400);
-  await demoClick(page, page.getByTestId("finding-detail-retest"));
-  await caption(page, "Sửa lỗi ưu tiên cao trước, sau đó retest để xác nhận.", 1900);
+  await caption(page, "Mỗi finding có prompt tấn công, phản hồi AI, tác động sản phẩm và hướng fix.", 3400);
+  await sleep(1100);
+  await softScroll(page, 0);
+  await caption(page, "Sau khi sửa lỗi ưu tiên cao, chạy retest để xác nhận.", 2600);
+  await demoClick(page, page.getByTestId("report-top-retest"));
+  await caption(page, "GreenShield ghi nhận yêu cầu retest cho các module rủi ro đã sửa.", 2800);
 
   await page.goto(`${APP_URL.replace(/\/$/, "")}/products`, { waitUntil: "networkidle" });
   await injectDemoOverlay(page);
-  await softScroll(page, 120);
-  await caption(page, "Chọn gói scan hoặc yêu cầu assessment bảo mật AI.", 2100);
+  await softScroll(page, 0);
+  await caption(page, "Chọn gói scan hoặc yêu cầu assessment bảo mật AI.", 2500);
   await demoClick(page, page.getByTestId("pricing-request-assessment"));
-  await sleep(900);
-  await caption(page, "GreenShield giúp đội AI triển khai LLM, RAG và agent an toàn hơn.", 2300);
+  await sleep(500);
+  await caption(page, "GreenShield giúp đội AI triển khai LLM, RAG và agent an toàn hơn.", 3000);
 
   const video = page.video();
   await page.close();

@@ -36,6 +36,20 @@ Preview production build:
 npm run preview
 ```
 
+## Deploy on Vercel
+
+Use these settings:
+
+```text
+Framework Preset: Vite
+Build Command: npm run build
+Output Directory: dist
+```
+
+This project includes `vercel.json` so React Router routes such as `/dashboard`,
+`/scan/new`, and `/reports/scan-gs-001` load correctly after refresh or direct
+link sharing.
+
 ## Run with Docker
 
 ```bash

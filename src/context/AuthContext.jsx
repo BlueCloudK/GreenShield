@@ -2,17 +2,18 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { readStorage, writeStorage } from "../utils/storage";
 
 const AUTH_KEY = "greenshield.auth";
-const DEMO_USER = {
-  name: "GreenShield Admin",
-  email: "admin@example.com",
-};
+const DEMO_USERS_KEY = "greenshield.demoUsers";
 
 const AuthContext = createContext(null);
+
+function normalizeEmail(email) {
+  return email.trim().toLowerCase();
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const storedUser = readStorage(AUTH_KEY, null);
-    return storedUser ? { ...DEMO_USER, email: storedUser.email || DEMO_USER.email } : null;
+    return storedUser?.email ? storedUser : null;
   });
 
   useEffect(() => {
@@ -24,14 +25,54 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   function login(email, password) {
-    if (email.trim().toLowerCase() === "admin@example.com" && password === "admin123") {
-      setUser(DEMO_USER);
+    const users = readStorage(DEMO_USERS_KEY, []);
+    const nextEmail = normalizeEmail(email);
+    const matchedUser = users.find((item) => item.email === nextEmail && item.password === password);
+
+    if (matchedUser) {
+      setUser({
+        name: matchedUser.name,
+        email: matchedUser.email,
+        company: matchedUser.company || "",
+      });
       return { ok: true };
     }
 
     return {
       ok: false,
-      message: "Demo email or password is incorrect.",
+      message: "Email hoặc mật khẩu demo chưa đúng.",
+    };
+  }
+
+  function register(account) {
+    const users = readStorage(DEMO_USERS_KEY, []);
+    const nextEmail = normalizeEmail(account.email);
+    const existingUser = users.find((item) => item.email === nextEmail);
+
+    if (existingUser) {
+      return {
+        ok: false,
+        message: "Email này đã được đăng ký trong demo. Hãy đăng nhập hoặc dùng email khác.",
+      };
+    }
+
+    const nextUser = {
+      name: account.name.trim(),
+      email: nextEmail,
+      company: account.company?.trim() || "",
+      password: account.password,
+      createdAt: new Date().toISOString(),
+    };
+
+    writeStorage(DEMO_USERS_KEY, [...users, nextUser]);
+    setUser({
+      name: nextUser.name,
+      email: nextUser.email,
+      company: nextUser.company,
+    });
+
+    return {
+      ok: true,
     };
   }
 
@@ -44,6 +85,7 @@ export function AuthProvider({ children }) {
       user,
       isAuthenticated: Boolean(user),
       login,
+      register,
       logout,
     }),
     [user],

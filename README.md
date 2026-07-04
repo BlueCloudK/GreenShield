@@ -87,12 +87,14 @@ Then open:
 http://YOUR_IPV4:8080
 ```
 
-## Demo login
+## Demo account
 
-- Email: `admin@example.com`
-- Password: `admin123`
+Use the **Đăng ký nhanh** flow on `/login` to create a local demo account.
+The account and session are stored in browser `localStorage` only, so this is
+not production authentication.
 
-Only the dashboard is protected in the MVP. Overview, New Scan, Demo Report, and Pricing remain public for low-friction demos.
+Only the dashboard, new scan wizard, and scan progress are protected in the
+MVP. Overview, Demo Report, and Pricing remain public for low-friction demos.
 
 ## Current MVP screens
 

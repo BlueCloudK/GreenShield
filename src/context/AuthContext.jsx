@@ -1,103 +1,57 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { readStorage, writeStorage } from "../utils/storage";
-
-const AUTH_KEY = "greenshield.auth";
-const DEMO_USERS_KEY = "greenshield.demoUsers";
+import { api, post } from "../lib/api";
 
 const AuthContext = createContext(null);
 
-function normalizeEmail(email) {
-  return email.trim().toLowerCase();
-}
-
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const storedUser = readStorage(AUTH_KEY, null);
-    return storedUser?.email ? storedUser : null;
-  });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      writeStorage(AUTH_KEY, user);
-    } else {
-      window.localStorage.removeItem(AUTH_KEY);
-    }
-  }, [user]);
+    let active = true;
+    api("/api/auth/me")
+      .then((result) => active && setUser(result.user))
+      .catch(() => active && setUser(null))
+      .finally(() => active && setLoading(false));
+    return () => { active = false; };
+  }, []);
 
-  function login(email, password) {
-    const users = readStorage(DEMO_USERS_KEY, []);
-    const nextEmail = normalizeEmail(email);
-    const matchedUser = users.find((item) => item.email === nextEmail && item.password === password);
-
-    if (matchedUser) {
-      setUser({
-        name: matchedUser.name,
-        email: matchedUser.email,
-        company: matchedUser.company || "",
-      });
+  async function login(email, password) {
+    try {
+      const result = await post("/api/auth/login", { email, password });
+      setUser(result.user);
       return { ok: true };
+    } catch (error) {
+      return { ok: false, message: error.message };
     }
-
-    return {
-      ok: false,
-      message: "Email hoặc mật khẩu demo chưa đúng.",
-    };
   }
 
-  function register(account) {
-    const users = readStorage(DEMO_USERS_KEY, []);
-    const nextEmail = normalizeEmail(account.email);
-    const existingUser = users.find((item) => item.email === nextEmail);
-
-    if (existingUser) {
-      return {
-        ok: false,
-        message: "Email này đã được đăng ký trong demo. Hãy đăng nhập hoặc dùng email khác.",
-      };
+  async function register(account) {
+    try {
+      const result = await post("/api/auth/register", account);
+      return { ok: true, user: result.user };
+    } catch (error) {
+      return { ok: false, message: error.message };
     }
-
-    const nextUser = {
-      name: account.name.trim(),
-      email: nextEmail,
-      company: account.company?.trim() || "",
-      password: account.password,
-      createdAt: new Date().toISOString(),
-    };
-
-    writeStorage(DEMO_USERS_KEY, [...users, nextUser]);
-
-    return {
-      ok: true,
-      user: {
-        name: nextUser.name,
-        email: nextUser.email,
-        company: nextUser.company,
-      },
-    };
   }
 
-  function logout() {
-    setUser(null);
+  async function logout() {
+    try { await post("/api/auth/logout"); } finally { setUser(null); }
   }
 
-  const value = useMemo(
-    () => ({
-      user,
-      isAuthenticated: Boolean(user),
-      login,
-      register,
-      logout,
-    }),
-    [user],
-  );
+  const value = useMemo(() => ({
+    user,
+    loading,
+    isAuthenticated: Boolean(user),
+    login,
+    register,
+    logout,
+  }), [user, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used inside AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used inside AuthProvider");
   return context;
 }

@@ -1,6 +1,5 @@
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import { flushSync } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { GreenShieldLogo } from "../brand/GreenShieldLogo";
@@ -9,7 +8,7 @@ import { Button } from "../ui/Button";
 const navItems = [
   { label: "Sản phẩm", to: "/" },
   { label: "Bảng giá", to: "/products" },
-  { label: "Báo cáo mẫu", to: "/reports/scan-gs-001" },
+  { label: "Cách hoạt động", to: "/#workflow" },
   { label: "Liên hệ", to: "/contact" },
 ];
 
@@ -18,9 +17,9 @@ export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
-  const scanRoute = isAuthenticated ? "/scan/new" : "/login";
-  const scanState = isAuthenticated ? undefined : { from: { pathname: "/scan/new" } };
-  const primaryActionLabel = isAuthenticated ? "Tạo scan mới" : "Bắt đầu scan";
+  const scanRoute = isAuthenticated ? "/app/projects/new" : "/login";
+  const scanState = isAuthenticated ? undefined : { from: { pathname: "/app/projects/new" } };
+  const primaryActionLabel = isAuthenticated ? "Tạo project" : "Dùng thử GreenShield";
 
   function isActiveRoute(to) {
     if (to === "/") return location.pathname === "/";
@@ -36,10 +35,8 @@ export function Header() {
     }`;
   }
 
-  function handleLogout() {
-    flushSync(() => {
-      logout();
-    });
+  async function handleLogout() {
+    await logout();
     setMenuOpen(false);
     navigate("/login?mode=login", { replace: true, state: { skipAuthRedirect: true } });
   }
@@ -75,7 +72,7 @@ export function Header() {
           </Button>
           {user ? (
             <>
-              <Button data-testid="header-dashboard-link" to="/dashboard" variant="secondary">
+              <Button data-testid="header-dashboard-link" to="/app" variant="secondary">
                 Dashboard
               </Button>
               <Button onClick={handleLogout} variant="ghost">
@@ -122,7 +119,7 @@ export function Header() {
             </Button>
             {user ? (
               <>
-                <Button className="w-full" onClick={() => setMenuOpen(false)} to="/dashboard" variant="secondary">
+                <Button className="w-full" onClick={() => setMenuOpen(false)} to="/app" variant="secondary">
                   Dashboard
                 </Button>
                 <Button className="w-full" onClick={handleLogout} variant="ghost">

@@ -18,6 +18,9 @@ playwright-report/
 test-results/
 artifacts/demo/*
 !artifacts/demo/.gitkeep
+data/*.db
+data/*.db-shm
+data/*.db-wal
 
 .agents/
 .codex/

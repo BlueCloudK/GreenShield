@@ -21,14 +21,14 @@ export default function ProductsPage() {
       <div className="mt-10 grid grid-cols-1 items-stretch gap-5 md:grid-cols-2 xl:grid-cols-4">
         {pricingPlans.map((plan) => (
           <article
-            className={`glass-panel flex min-w-0 flex-col rounded-2xl p-5 ${plan.name === "RAG & Agent Assessment" ? "border-emerald-300/40 shadow-[0_0_42px_rgba(74,222,128,0.13)]" : ""}`}
+            className={`glass-panel flex min-w-0 flex-col rounded-2xl p-5 ${plan.name === "AI App Assessment" ? "border-emerald-300/40" : ""}`}
             key={plan.name}
           >
             <div className="flex min-h-[4.25rem] min-w-0 items-start justify-between gap-3">
               <p className="min-w-0 text-sm font-bold leading-5 text-emerald-300">{plan.targetUser}</p>
               <span
                 className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-black ${
-                  plan.name === "RAG & Agent Assessment"
+                  plan.name === "AI App Assessment"
                     ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-100"
                     : "border-white/10 bg-white/[0.05] text-slate-300"
                 }`}
@@ -67,7 +67,7 @@ export default function ProductsPage() {
                 <span className="font-bold text-white">Review thủ công:</span> {plan.manualReview}
               </p>
             </div>
-            <Button className="mt-4 w-full" data-testid={`pricing-plan-${pricingPlans.indexOf(plan) + 1}`} to={plan.name === "Project Assessment" ? "/contact" : "/scan/new"} variant={plan.name === "Project Assessment" ? "secondary" : "primary"}>
+            <Button className="mt-4 w-full" data-testid={`pricing-plan-${pricingPlans.indexOf(plan) + 1}`} to={plan.name === "Product Preview" ? "/login" : "/contact"} variant={plan.name === "Product Preview" ? "primary" : "secondary"}>
               {plan.ctaLabel}
             </Button>
           </article>

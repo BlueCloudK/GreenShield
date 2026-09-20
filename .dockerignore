@@ -5,5 +5,6 @@ dist
 .codex-screenshots
 .codex-chrome-profile*
 npm-debug.log
+data/*.db*
 Dockerfile
 README.md

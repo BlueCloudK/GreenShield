@@ -257,71 +257,69 @@ async function main() {
       size: VIEWPORT,
     },
   });
-  await context.addInitScript(() => {
-    window.localStorage.setItem(
-      "greenshield.auth",
-      JSON.stringify({ name: "GreenShield Admin", email: "admin@example.com" }),
-    );
+  const demoEmail = `demo-${Date.now()}@greenshield.local`;
+  const demoPassword = "GreenShieldDemo2026!";
+  const registerResponse = await context.request.post(`${APP_URL.replace(/\/$/, "")}/api/auth/register`, {
+    data: { name: "GreenShield Demo", email: demoEmail, company: "Demo Workspace", password: demoPassword },
   });
+  if (!registerResponse.ok()) throw new Error(`Cannot seed demo user: ${await registerResponse.text()}`);
+  const loginResponse = await context.request.post(`${APP_URL.replace(/\/$/, "")}/api/auth/login`, {
+    data: { email: demoEmail, password: demoPassword },
+  });
+  if (!loginResponse.ok()) throw new Error(`Cannot create demo session: ${await loginResponse.text()}`);
 
   const page = await context.newPage();
   await waitForApp(page);
   await injectDemoOverlay(page);
   await sleep(450);
 
-  await caption(page, "GreenShield kiểm thử bảo mật cho LLM, RAG và AI agent trước khi triển khai.", 2600);
+  await caption(page, "GreenShield kiểm thử bảo mật cho chatbot, RAG và AI agent trước khi triển khai.", 3400);
   await demoClick(page, page.getByTestId("home-start-scan"));
-  await page.waitForURL("**/scan/new", { timeout: 12000 });
+  await page.waitForURL("**/app/projects/new", { timeout: 12000 });
   await sleep(450);
 
-  await caption(page, "Chọn kịch bản scan: RAG nội bộ, AI agent hoặc chatbot công khai.", 2500);
-  await softScroll(page, 300);
-  await caption(page, "Mỗi phiên scan có thể bật hoặc tắt các module rủi ro cần kiểm thử.", 2900);
-  await softScroll(page, 520);
-  await sleep(280);
+  await caption(page, "Tạo project cho ứng dụng AI cần đánh giá.", 3000);
+  await demoClick(page, page.getByTestId("project-create-submit"));
+  await page.waitForURL("**/app/projects/**", { timeout: 12000 });
+  await caption(page, "Kết nối target demo an toàn để trình diễn trọn vẹn flow kiểm thử.", 3300);
+  await demoClick(page, page.getByTestId("target-connect-demo"));
+  await demoClick(page, page.getByTestId("target-test-connection"));
+  await page.getByText("Đã kết nối").waitFor({ state: "visible", timeout: 12000 });
+  await demoClick(page, page.getByTestId("project-new-scan"));
+  await page.waitForURL("**/scans/new", { timeout: 12000 });
 
-  await caption(page, "Điền mục tiêu kiểm thử và chọn module rủi ro.", 2400);
-  for (let step = 0; step < 2; step += 1) {
-    await demoClick(page, page.getByTestId("scan-next-step"));
-  }
-
-  await caption(page, "Có thể bỏ chọn module chưa cần test, hoặc chọn lại khi muốn đưa vào report.", 3100);
-  await demoClick(page, page.getByTestId("risk-module-unsafe-tool-calls"));
-  await sleep(650);
-  await demoClick(page, page.getByTestId("risk-module-unsafe-tool-calls"));
-  await caption(page, "Module được chọn sẽ quyết định bằng chứng và checklist retest trong report.", 3000);
-  await demoClick(page, page.getByTestId("scan-next-step"));
-
-  await caption(page, "Chạy phiên scan bảo mật tập trung.", 2200);
-  await demoClick(page, page.getByTestId("scan-run-button"));
-  await page.waitForURL("**/scan/progress", { timeout: 12000 });
-  await sleep(600);
-
-  await caption(page, "GreenShield chạy probe, thu thập bằng chứng và tạo report.", 2700);
-  await sleep(550);
-  await demoClick(page, page.getByTestId("progress-open-report"));
-  await page.waitForURL("**/reports/scan-gs-001", { timeout: 12000 });
-  await sleep(600);
+  await caption(page, "Chọn hoặc bỏ chọn những bài kiểm thử cần chạy trong phiên scan.", 3800);
+  const optionalTest = page.getByTestId("security-test-unsafe-tool-action");
+  await demoClick(page, optionalTest);
+  await sleep(700);
+  await demoClick(page, optionalTest);
+  await caption(page, "Bắt đầu scan; tiến độ được cập nhật từ các execution thật trên server.", 3800);
+  await demoClick(page, page.getByTestId("scan-run"));
+  await page.waitForURL("**/app/scans/**", { timeout: 12000 });
+  await caption(page, "GreenShield gửi payload, thu thập response và đánh giá từng hành vi.", 4200);
+  await page.getByText("Scan đã hoàn tất").waitFor({ state: "visible", timeout: 30000 });
+  await demoClick(page, page.getByTestId("scan-open-report"));
+  await page.waitForURL("**/app/reports/**", { timeout: 12000 });
+  await sleep(700);
 
   await softScroll(page, 0);
-  await caption(page, "Report mở đầu bằng điểm rủi ro, câu chuyện bảo mật và lỗi cần sửa trước.", 3200);
-  await softScroll(page, 410);
-  await caption(page, "Chọn từng finding để xem bằng chứng tấn công và hướng xử lý.", 2700);
-  await demoClick(page, page.getByTestId("finding-finding-002"));
-  await caption(page, "Mỗi finding có prompt tấn công, phản hồi AI, tác động sản phẩm và hướng fix.", 3400);
-  await sleep(1100);
-  await softScroll(page, 0);
-  await caption(page, "Sau khi sửa lỗi ưu tiên cao, chạy retest để xác nhận.", 2600);
-  await demoClick(page, page.getByTestId("report-top-retest"));
-  await caption(page, "GreenShield ghi nhận yêu cầu retest cho các module rủi ro đã sửa.", 2800);
+  await caption(page, "Report tóm tắt điểm rủi ro, số phát hiện và trạng thái retest.", 4000);
+  await caption(page, "Chọn một finding để đọc prompt tấn công, response, tác động và hướng sửa.", 4200);
+  await demoClick(page, page.getByTestId("finding-system-prompt-leakage"));
+  await sleep(1300);
+  await caption(page, "Sau khi khắc phục, chuyển target sang trạng thái an toàn và chạy lại đúng test đó.", 4300);
+  await demoClick(page, page.getByTestId("report-fixed-mode"));
+  await demoClick(page, page.getByTestId("finding-retest"));
+  await page.getByText("Đã khắc phục").first().waitFor({ state: "visible", timeout: 12000 });
+  await caption(page, "Lịch sử retest xác nhận finding đã được khắc phục bằng response mới.", 4000);
 
   await page.goto(`${APP_URL.replace(/\/$/, "")}/products`, { waitUntil: "networkidle" });
   await injectDemoOverlay(page);
   await softScroll(page, 0);
-  await caption(page, "Chọn gói scan hoặc yêu cầu assessment bảo mật AI.", 2500);
+  await caption(page, "Liên hệ GreenShield để xác nhận phạm vi assessment cho sản phẩm AI của bạn.", 3800);
   await demoClick(page, page.getByTestId("pricing-request-assessment"));
   await sleep(500);
-  await caption(page, "GreenShield giúp đội AI triển khai LLM, RAG và agent an toàn hơn.", 3000);
+  await caption(page, "GreenShield giúp đội AI hiểu điều gì đã xảy ra, cần sửa gì trước và cách xác nhận sau khi sửa.", 4300);
 
   const video = page.video();
   await page.close();

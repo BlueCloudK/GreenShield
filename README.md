@@ -1,122 +1,64 @@
 # GreenShield MVP
 
-GreenShield is a demo AI security testing workflow for chatbots, RAG systems, AI agents, and AI-powered APIs.
-
-Core workflow:
+GreenShield is a functional sales-demo SaaS for testing AI chatbots, RAG endpoints, and agents:
 
 ```text
-Scan -> Detect -> Score -> Report -> Fix -> Retest
+Project -> Target -> Test Connection -> Scan -> Finding -> Fix -> Retest -> Report
 ```
 
-## Tech stack
+## Stack
 
-- React + Vite
-- Tailwind CSS
-- React Router
-- React Context for demo auth/session
-- lucide-react
-- Local mock data, structured for later API replacement
+- React, Vite, Tailwind CSS, React Router
+- Express API with HttpOnly cookie sessions
+- SQLite through `better-sqlite3`
+- Deterministic security-test registry and scan worker
 
 ## Run locally
 
 ```bash
 npm install
-npm run dev
+npm run db:migrate
+npm run dev:full
 ```
 
-Build production:
-
-```bash
-npm run build
-```
-
-Preview production build:
-
-```bash
-npm run preview
-```
-
-## Deploy on Vercel
-
-Use these settings:
-
-```text
-Framework Preset: Vite
-Build Command: npm run build
-Output Directory: dist
-```
-
-This project includes `vercel.json` so React Router routes such as `/dashboard`,
-`/scan/new`, and `/reports/scan-gs-001` load correctly after refresh or direct
-link sharing.
+Open `http://127.0.0.1:5173`, register, then log in. Vite proxies `/api` to port `3000`.
 
 ## Run with Docker
 
 ```bash
-docker compose up -d
+docker compose up --build
 ```
 
-Open:
+Open `http://127.0.0.1:8080`. SQLite data persists in the `greenshield-data` volume.
 
-```text
-http://localhost:8080
-```
+## Environment
 
-Stop:
+Copy `.env.example` to `.env` for non-demo deployment and replace both secret values. `SECRET_ENCRYPTION_KEY` encrypts target credentials at rest. Never commit production tokens.
+
+## Verification
 
 ```bash
-docker compose down
+npm test
+npm run build
+npm run demo:record
 ```
 
-Manual build/run:
+## What is real
 
-```bash
-docker build -t greenshield-mvp .
-docker run --rm -p 8080:80 --name greenshield-mvp greenshield-mvp
-```
+- Registration, password hashing, login sessions, and workspace isolation
+- Project and target persistence
+- HTTP connection checks with timeout, response-size, redirect, and private-network restrictions
+- Four executable tests, persisted executions, evidence, scoring, retest history, and reports
 
-To view from a phone on the same Wi-Fi/LAN, find the host IPv4:
+## What is simulated
 
-```powershell
-ipconfig
-```
+- The included vulnerable/fixed target is controlled demo infrastructure.
+- Detection uses explicit deterministic rules, not an LLM judge.
+- PDF export uses the browser print dialog.
+- Billing, invitations, production queues, and provider integrations are not implemented.
 
-Then open:
+## Deployment
 
-```text
-http://YOUR_IPV4:8080
-```
+Deploy the Docker image to a host with persistent storage. Static Vercel hosting is no longer sufficient because the product requires Express and SQLite. A Vercel deployment first needs Postgres/serverless storage and a serverless API adapter.
 
-## Demo account
-
-Use the **Đăng ký nhanh** flow on `/login` to create a local demo account, then
-log in with that email and password. The account and session are stored in
-browser `localStorage` only, so this is not production authentication.
-
-Only the dashboard, new scan wizard, and scan progress are protected in the
-MVP. Overview, Demo Report, and Pricing remain public for low-friction demos.
-
-## Current MVP screens
-
-- Overview landing page explaining GreenShield and the scan workflow
-- Dashboard with scan summary, high-risk findings, retests pending, and recent scans
-- New Scan Wizard with app info, target input, risk modules, and confirm step
-- Scan Progress mock screen
-- Demo Report with risk score, findings, evidence, fix guidance, and retest actions
-- Pricing page for scan/report/retest packages
-
-## Mock/demo notes
-
-- No backend scan runner yet.
-- No real payment processing.
-- Do not enter production secrets into the demo token field.
-- Mock scan/finding/pricing data lives in `src/data/scans.js`.
-- Demo auth is localStorage-based and not production-ready.
-
-## Backend integration points
-
-- Replace mock scan data with scan/report APIs.
-- Persist scan wizard submissions.
-- Connect progress state to a real scan runner.
-- Store findings, evidence, fix guidance, and retest status server-side.
-- Implement report export and authenticated team workspaces.
+See [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

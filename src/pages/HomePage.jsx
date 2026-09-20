@@ -137,9 +137,9 @@ function SectionLabel({ children }) {
 
 export default function HomePage() {
   const { isAuthenticated } = useAuth();
-  const scanRoute = isAuthenticated ? "/scan/new" : "/login";
-  const scanState = isAuthenticated ? undefined : { from: { pathname: "/scan/new" } };
-  const primaryActionLabel = isAuthenticated ? "Tạo scan mới" : "Bắt đầu scan";
+  const scanRoute = isAuthenticated ? "/app/projects/new" : "/login";
+  const scanState = isAuthenticated ? undefined : { from: { pathname: "/app/projects/new" } };
+  const primaryActionLabel = isAuthenticated ? "Tạo project" : "Dùng thử GreenShield";
   const helperText = isAuthenticated
     ? "Tạo scan mới để đi qua wizard, progress và report kết quả."
     : "Đăng nhập bằng tài khoản dùng thử để lưu phiên scan. Báo cáo mẫu có thể xem công khai.";
@@ -165,8 +165,8 @@ export default function HomePage() {
               <Button className="w-full px-6 py-3 sm:w-fit" data-testid="home-start-scan" state={scanState} to={scanRoute}>
                 {primaryActionLabel}
               </Button>
-              <Button className="w-full px-6 py-3 sm:w-fit" data-testid="home-demo-report" to="/reports/scan-gs-001" variant="secondary">
-                Xem báo cáo mẫu
+              <Button className="w-full px-6 py-3 sm:w-fit" data-testid="home-demo-report" to="/#report" variant="secondary">
+                Xem cấu trúc report
               </Button>
             </div>
             <p className="mt-4 max-w-xl text-sm leading-6 text-slate-400">
@@ -374,7 +374,7 @@ export default function HomePage() {
 
         <div className="mt-10 grid gap-4 lg:grid-cols-4">
           {pricingPlans.map((plan, index) => {
-            const isHighlighted = plan.name === "RAG & Agent Assessment";
+            const isHighlighted = plan.name === "AI App Assessment";
 
             return (
               <article
@@ -431,8 +431,8 @@ export default function HomePage() {
             <Button className="w-full sm:w-fit" to="/contact">
               Yêu cầu assessment <ArrowRight size={17} aria-hidden="true" />
             </Button>
-            <Button className="w-full sm:w-fit" to="/reports/scan-gs-001" variant="secondary">
-              Xem báo cáo mẫu
+            <Button className="w-full sm:w-fit" to="/login" variant="secondary">
+              Chạy demo target
             </Button>
           </div>
         </div>

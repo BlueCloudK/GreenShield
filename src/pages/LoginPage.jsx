@@ -27,10 +27,13 @@ export default function LoginPage() {
   const [loginForm, setLoginForm] = useState(initialLoginForm);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [registerTouched, setRegisterTouched] = useState({});
+  const [loginTouched, setLoginTouched] = useState({});
   const { isAuthenticated, login, register } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const redirectTo = location.state?.from?.pathname || "/dashboard";
+  const redirectTo = location.state?.from?.pathname || "/app";
 
   useEffect(() => {
     if (isAuthenticated && !location.state?.skipAuthRedirect) {
@@ -48,7 +51,7 @@ export default function LoginPage() {
     const errors = {};
     if (!registerForm.name.trim()) errors.name = "Nhập tên để tạo tài khoản demo.";
     if (!isValidEmail(registerForm.email)) errors.email = "Nhập email hợp lệ.";
-    if (registerForm.password.length < 6) errors.password = "Mật khẩu demo cần ít nhất 6 ký tự.";
+    if (registerForm.password.length < 8) errors.password = "Mật khẩu cần ít nhất 8 ký tự.";
     return errors;
   }, [registerForm]);
 
@@ -77,16 +80,27 @@ export default function LoginPage() {
     setSuccess("");
   }
 
-  function handleRegister(event) {
+  function touchRegister(field) {
+    setRegisterTouched((current) => ({ ...current, [field]: true }));
+  }
+
+  function touchLogin(field) {
+    setLoginTouched((current) => ({ ...current, [field]: true }));
+  }
+
+  async function handleRegister(event) {
     event.preventDefault();
     setError("");
 
     if (Object.keys(registerErrors).length) {
+      setRegisterTouched({ name: true, email: true, password: true });
       setError("Vui lòng kiểm tra lại thông tin đăng ký.");
       return;
     }
 
-    const result = register(registerForm);
+    setSubmitting(true);
+    const result = await register(registerForm);
+    setSubmitting(false);
     if (!result.ok) {
       setError(result.message);
       return;
@@ -97,20 +111,24 @@ export default function LoginPage() {
       password: registerForm.password,
     });
     setRegisterForm(initialRegisterForm);
+    setRegisterTouched({});
     setMode("login");
-    setSuccess("Tài khoản demo đã được tạo. Kiểm tra lại email/mật khẩu rồi bấm Đăng nhập để vào dashboard.");
+    setSuccess("Tài khoản đã được tạo. Kiểm tra lại email/mật khẩu rồi đăng nhập để vào workspace.");
   }
 
-  function handleLogin(event) {
+  async function handleLogin(event) {
     event.preventDefault();
     setError("");
 
     if (Object.keys(loginErrors).length) {
+      setLoginTouched({ email: true, password: true });
       setError("Vui lòng nhập đúng email và mật khẩu demo.");
       return;
     }
 
-    const result = login(loginForm.email, loginForm.password);
+    setSubmitting(true);
+    const result = await login(loginForm.email, loginForm.password);
+    setSubmitting(false);
     if (!result.ok) {
       setError(result.message);
     }
@@ -128,18 +146,18 @@ export default function LoginPage() {
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-300/10 text-emerald-200">
           {isRegisterMode ? <UserPlus size={26} aria-hidden="true" /> : <LockKeyhole size={26} aria-hidden="true" />}
         </div>
-        <p className="section-kicker mt-8">Tài khoản demo</p>
+        <p className="section-kicker mt-8">GreenShield workspace</p>
         <h1 className="mt-3 text-4xl font-black text-white">
           {isRegisterMode ? "Tạo tài khoản dùng thử" : "Đăng nhập GreenShield"}
         </h1>
         <p className="mt-4 leading-7 text-slate-400">
-          Tạo nhanh một tài khoản demo, sau đó đăng nhập để vào dashboard, chạy phiên scan và xem report bảo mật AI. Tài khoản chỉ lưu trong trình duyệt bằng localStorage, chưa phải auth production.
+          Đăng ký workspace để tạo project, kết nối target, chạy security tests và theo dõi retest bằng dữ liệu được lưu trên server.
         </p>
         <div className="mt-8 grid gap-3">
           {[
-            "Không cần email xác thực ở bản demo.",
-            "Không nhập token, API key hoặc dữ liệu khách hàng thật.",
-            "Có thể thay bằng backend auth sau khi MVP được validate.",
+            "Mật khẩu được băm trước khi lưu.",
+            "Phiên đăng nhập dùng cookie HttpOnly.",
+            "Demo target không chứa secret hoặc dữ liệu khách hàng thật.",
           ].map((item) => (
             <div className="flex gap-3 rounded-2xl border border-white/10 bg-slate-950/45 p-3 text-sm leading-6 text-slate-300" key={item}>
               <ShieldCheck className="mt-0.5 shrink-0 text-emerald-200" size={17} aria-hidden="true" />
@@ -171,22 +189,24 @@ export default function LoginPage() {
         {isRegisterMode ? (
           <form className="mt-6" onSubmit={handleRegister}>
             <div className="space-y-5">
-              <FormField error={registerErrors.name} label="Họ tên" name="name">
+              <FormField error={registerTouched.name ? registerErrors.name : ""} label="Họ tên" name="name">
                 <input
                   autoComplete="name"
                   className={inputClasses}
                   name="name"
+                  onBlur={() => touchRegister("name")}
                   onChange={(event) => updateRegister("name", event.target.value)}
                   placeholder="Nguyễn Minh"
                   value={registerForm.name}
                 />
               </FormField>
-              <FormField error={registerErrors.email} label="Email công việc" name="email">
+              <FormField error={registerTouched.email ? registerErrors.email : ""} label="Email công việc" name="email">
                 <input
-                  autoComplete="username"
+                  autoComplete="email"
                   className={inputClasses}
                   inputMode="email"
                   name="email"
+                  onBlur={() => touchRegister("email")}
                   onChange={(event) => updateRegister("email", event.target.value)}
                   placeholder="you@company.com"
                   value={registerForm.email}
@@ -202,44 +222,47 @@ export default function LoginPage() {
                   value={registerForm.company}
                 />
               </FormField>
-              <FormField error={registerErrors.password} label="Mật khẩu demo" name="password">
+              <FormField error={registerTouched.password ? registerErrors.password : ""} label="Mật khẩu" name="password">
                 <input
                   autoComplete="new-password"
                   className={inputClasses}
                   name="password"
+                  onBlur={() => touchRegister("password")}
                   onChange={(event) => updateRegister("password", event.target.value)}
-                  placeholder="Tối thiểu 6 ký tự"
+                  placeholder="Tối thiểu 8 ký tự"
                   type="password"
                   value={registerForm.password}
                 />
               </FormField>
             </div>
             {error ? <p className="mt-4 rounded-2xl bg-rose-400/10 p-3 text-sm text-rose-200">{error}</p> : null}
-            <Button className="mt-6 w-full" data-testid="register-submit" type="submit">
-              Tạo tài khoản demo
+            <Button className="mt-6 w-full" data-testid="register-submit" disabled={submitting} type="submit">
+              {submitting ? "Đang tạo..." : "Tạo tài khoản"}
             </Button>
           </form>
         ) : (
           <form className="mt-6" onSubmit={handleLogin}>
             <div className="space-y-5">
-              <FormField error={loginErrors.email} label="Email" name="email">
+              <FormField error={loginTouched.email ? loginErrors.email : ""} label="Email" name="email">
                 <input
                   autoComplete="username"
                   className={inputClasses}
                   inputMode="email"
                   name="email"
+                  onBlur={() => touchLogin("email")}
                   onChange={(event) => updateLogin("email", event.target.value)}
-                  placeholder="Email đã đăng ký demo"
+                  placeholder="Email đã đăng ký"
                   value={loginForm.email}
                 />
               </FormField>
-              <FormField error={loginErrors.password} label="Mật khẩu" name="password">
+              <FormField error={loginTouched.password ? loginErrors.password : ""} label="Mật khẩu" name="password">
                 <input
                   autoComplete="current-password"
                   className={inputClasses}
                   name="password"
+                  onBlur={() => touchLogin("password")}
                   onChange={(event) => updateLogin("password", event.target.value)}
-                  placeholder="Mật khẩu demo"
+                  placeholder="Mật khẩu"
                   type="password"
                   value={loginForm.password}
                 />
@@ -247,8 +270,8 @@ export default function LoginPage() {
             </div>
             {success ? <p className="mt-4 rounded-2xl bg-emerald-300/10 p-3 text-sm text-emerald-100">{success}</p> : null}
             {error ? <p className="mt-4 rounded-2xl bg-rose-400/10 p-3 text-sm text-rose-200">{error}</p> : null}
-            <Button className="mt-6 w-full" data-testid="login-submit" type="submit">
-              Đăng nhập
+            <Button className="mt-6 w-full" data-testid="login-submit" disabled={submitting} type="submit">
+              {submitting ? "Đang đăng nhập..." : "Đăng nhập"}
             </Button>
           </form>
         )}

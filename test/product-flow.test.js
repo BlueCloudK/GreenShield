@@ -76,4 +76,9 @@ test("complete vulnerable scan, evidence, fixed retest, and report flow", async 
   const report = await api(`/api/reports/${scan.id}`);
   assert.equal(report.report.scope.project, "My AI Assistant");
   assert.ok(report.report.retests.some((item) => item.finding_id === findingId && item.status === "FIXED"));
+  assert.ok(report.report.risk.score <= report.report.risk.initialScore);
+
+  const retry = await api(`/api/scans/${scan.id}/retry`, { method: "POST", body: "{}" });
+  assert.notEqual(retry.scan.id, scan.id);
+  assert.equal(retry.scan.project_id, project.id);
 });

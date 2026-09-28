@@ -141,8 +141,8 @@ export default function HomePage() {
   const scanState = isAuthenticated ? undefined : { from: { pathname: "/app/projects/new" } };
   const primaryActionLabel = isAuthenticated ? "Tạo project" : "Dùng thử GreenShield";
   const helperText = isAuthenticated
-    ? "Tạo scan mới để đi qua wizard, progress và report kết quả."
-    : "Đăng nhập bằng tài khoản dùng thử để lưu phiên scan. Báo cáo mẫu có thể xem công khai.";
+    ? "Tạo project để kết nối target, chạy scan và theo dõi kết quả retest."
+    : "Đăng ký tài khoản để lưu scan và report. Bạn có thể xem trước cấu trúc báo cáo ở bên dưới.";
 
   return (
     <main className="overflow-hidden">

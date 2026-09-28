@@ -49,6 +49,9 @@ npm run demo:record
 - Project and target persistence
 - HTTP connection checks with timeout, response-size, redirect, and private-network restrictions
 - Four executable tests, persisted executions, evidence, scoring, retest history, and reports
+- Contact requests stored in SQLite, with basic validation and duplicate-submit throttling
+
+Contact requests are stored in the `contact_requests` table. The current MVP does not send email notifications; the team must monitor requests in the database.
 
 ## What is simulated
 
@@ -62,3 +65,7 @@ npm run demo:record
 Deploy the Docker image to a host with persistent storage. Static Vercel hosting is no longer sufficient because the product requires Express and SQLite. A Vercel deployment first needs Postgres/serverless storage and a serverless API adapter.
 
 See [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## EXE201 Outcome 1
+
+The [OC1 GreenShield dossier](docs/OC1_GREENSHIELD.md) maps the product to tasks 1.1-1.10 and lists the evidence still required before submission.

@@ -1,15 +1,31 @@
 import { CheckCircle2, Circle, LoaderCircle } from "lucide-react";
-import { useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { ErrorState, LoadingState } from "../components/ui/PageState";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useApiResource } from "../hooks/useApiResource";
+import { post } from "../lib/api";
 
 export default function ScanDetailPage() {
   const { scanId } = useParams();
   const resource = useApiResource(`/api/scans/${scanId}`, { silent: true });
   const scan = resource.data?.scan;
+  const navigate = useNavigate();
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState("");
+
+  async function retryScan() {
+    setRetrying(true);
+    setRetryError("");
+    try {
+      const result = await post(`/api/scans/${scanId}/retry`);
+      navigate(`/app/scans/${result.scan.id}`);
+    } catch (error) {
+      setRetryError(error.message);
+      setRetrying(false);
+    }
+  }
 
   useEffect(() => {
     if (!scan || !["QUEUED", "RUNNING"].includes(scan.status)) return undefined;
@@ -42,7 +58,7 @@ export default function ScanDetailPage() {
 
       {scan.status === "COMPLETED" ? (
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-white/10 bg-[#0a1019] p-5"><div><p className="font-black text-white">Scan đã hoàn tất</p><p className="mt-1 text-sm text-slate-400">{scan.findings.length} finding · Risk score {scan.risk_score ?? 0}/100</p></div><Button data-testid="scan-open-report" to={`/app/reports/${scan.id}`}>Xem evidence và hướng sửa</Button></div>
-      ) : finished ? <div className="mt-6 rounded-lg border border-rose-300/20 bg-rose-300/[0.05] p-5"><p className="font-black text-rose-100">Scan không hoàn tất</p><p className="mt-1 text-sm text-slate-400">{scan.error_message || "Kiểm tra kết nối target rồi chạy lại từ project."}</p></div> : null}
+      ) : finished ? <div className="mt-6 rounded-lg border border-rose-300/20 bg-rose-300/[0.05] p-5"><p className="font-black text-rose-100">Scan không hoàn tất</p><p className="mt-1 text-sm text-slate-400">{scan.error_message || "Kiểm tra kết nối target rồi thử lại."}</p>{retryError && <p className="mt-3 text-sm text-rose-200" role="alert">{retryError}</p>}<Button className="mt-4" data-testid="scan-retry" disabled={retrying} onClick={retryScan} variant="secondary">{retrying ? "Đang tạo scan..." : "Chạy lại scan"}</Button></div> : null}
     </section>
   );
 }

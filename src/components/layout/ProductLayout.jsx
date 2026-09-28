@@ -1,6 +1,6 @@
 import { FolderKanban, LayoutDashboard, LogOut, Menu, Plus, X } from "lucide-react";
-import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { GreenShieldLogo } from "../brand/GreenShieldLogo";
 import { Button } from "../ui/Button";
@@ -14,6 +14,8 @@ export function ProductLayout() {
   const [open, setOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); setOpen(false); }, [location.pathname]);
 
   async function handleLogout() {
     await logout();
@@ -69,4 +71,3 @@ export function ProductLayout() {
     </div>
   );
 }
-

@@ -1,7 +1,9 @@
 import { Send } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { FormField, inputClasses } from "../components/ui/FormField";
+import { post } from "../lib/api";
 
 const initialForm = {
   fullName: "",
@@ -23,21 +25,32 @@ export default function ContactPage() {
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState("");
+  const [requestError, setRequestError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [website, setWebsite] = useState("");
 
   function updateField(field, value) {
     setForm((currentForm) => ({ ...currentForm, [field]: value }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const nextErrors = validateContact(form);
     setErrors(nextErrors);
     setSuccess("");
+    setRequestError("");
 
     if (Object.keys(nextErrors).length > 0) return;
-
-    setForm(initialForm);
-    setSuccess("Đã ghi nhận yêu cầu. GreenShield sẽ liên hệ lại để trao đổi phạm vi assessment.");
+    setSubmitting(true);
+    try {
+      await post("/api/contact", { ...form, website });
+      setForm(initialForm);
+      setSuccess("Đã nhận yêu cầu của bạn.");
+    } catch (error) {
+      setRequestError(error.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -51,6 +64,7 @@ export default function ContactPage() {
       </div>
 
       <form className="glass-panel mt-10 rounded-3xl p-6 sm:p-8" onSubmit={handleSubmit}>
+        <input aria-hidden="true" autoComplete="off" className="hidden" name="website" onChange={(event) => setWebsite(event.target.value)} tabIndex={-1} value={website} />
         <div className="grid gap-5 md:grid-cols-2">
           <FormField error={errors.fullName} label="Họ tên" name="fullName">
             <input
@@ -88,9 +102,11 @@ export default function ContactPage() {
           </FormField>
         </div>
         {success ? <p className="mt-5 rounded-2xl bg-emerald-300/10 p-4 text-sm text-emerald-200">{success}</p> : null}
-        <Button className="mt-6" type="submit">
+        {requestError ? <p className="mt-5 rounded-lg bg-rose-400/10 p-4 text-sm text-rose-100" role="alert">{requestError}</p> : null}
+        <p className="mt-5 text-xs leading-5 text-slate-500">Thông tin bạn gửi được lưu để xử lý yêu cầu. Đừng gửi mật khẩu hoặc token. Xem <Link className="text-emerald-200 underline" to="/privacy">quyền riêng tư</Link>.</p>
+        <Button className="mt-6" disabled={submitting} type="submit">
           <Send size={17} aria-hidden="true" />
-          Gửi yêu cầu
+          {submitting ? "Đang gửi..." : "Gửi yêu cầu"}
         </Button>
       </form>
     </section>

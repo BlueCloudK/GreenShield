@@ -7,6 +7,7 @@ import { authenticate, clearSessionCookie, destroySession, loginUser, optionalAu
 import { createDatabase, json } from "./db/index.js";
 import { respondAsDemoTarget } from "./security/demo-target.js";
 import { encryptSecret } from "./security/secret-provider.js";
+import { calculateRisk } from "./security/scoring.js";
 import { sendTargetRequest } from "./security/target-client.js";
 import { createScanService, httpError } from "./services/scan-service.js";
 
@@ -27,6 +28,24 @@ export function createApp(options = {}) {
   app.use(express.json({ limit: "200kb" }));
 
   app.get("/api/health", (_request, response) => response.json({ ok: true, service: "greenshield" }));
+
+  app.post("/api/contact", (request, response, next) => {
+    try {
+      if (request.body?.website) return response.status(202).json({ received: true });
+      const fullName = String(request.body?.fullName || "").trim();
+      const email = String(request.body?.email || "").trim().toLowerCase();
+      const subject = String(request.body?.subject || "").trim();
+      const message = String(request.body?.message || "").trim();
+      if (!fullName || fullName.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || !subject || subject.length > 160 || message.length < 10 || message.length > 4000) {
+        throw httpError(400, "Vui lòng kiểm tra lại thông tin liên hệ.");
+      }
+      const recent = db.prepare("SELECT 1 FROM contact_requests WHERE email=? AND created_at>? LIMIT 1").get(email, new Date(Date.now() - 60_000).toISOString());
+      if (recent) throw httpError(429, "Vui lòng đợi một phút trước khi gửi yêu cầu khác.");
+      db.prepare("INSERT INTO contact_requests (id, full_name, email, subject, message, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+        .run(id("contact"), fullName, email, subject, message, now());
+      response.status(201).json({ received: true });
+    } catch (error) { next(error); }
+  });
 
   app.post("/api/auth/register", (request, response, next) => {
     try {
@@ -163,6 +182,7 @@ export function createApp(options = {}) {
     try {
       const target = ownedTarget(db, request.params.targetId, request.auth.workspace.id);
       if (!target) throw httpError(404, "Không tìm thấy target.");
+      if (target.type !== 'DEMO' || !['fixed', 'vulnerable'].includes(request.body?.mode)) throw httpError(400, "Chỉ demo target hỗ trợ chuyển chế độ vulnerable/fixed.");
       const config = { ...json(target.config_json, {}), ...(request.body?.mode ? { mode: request.body.mode } : {}) };
       db.prepare("UPDATE targets SET config_json=?, updated_at=? WHERE id=?").run(JSON.stringify(config), now(), target.id);
       addAudit(db, request.auth, "TARGET_UPDATED", "target", target.id, { mode: config.mode });
@@ -205,6 +225,17 @@ export function createApp(options = {}) {
       const scan = scans.getScan(request.params.scanId, request.auth.workspace.id);
       if (!scan) throw httpError(404, "Không tìm thấy scan.");
       response.json({ scan });
+    } catch (error) { next(error); }
+  });
+
+  app.post('/api/scans/:scanId/retry', requireAuth, (request, response, next) => {
+    try {
+      const previous = scans.getScan(request.params.scanId, request.auth.workspace.id);
+      if (!previous) throw httpError(404, 'Không tìm thấy scan.');
+      if (['QUEUED', 'RUNNING'].includes(previous.status)) throw httpError(409, 'Scan vẫn đang chạy.');
+      const config = db.prepare('SELECT test_ids_json FROM scan_configurations WHERE scan_id=?').get(previous.id);
+      const scan = scans.createScan({ projectId: previous.project_id, targetId: previous.target_id, testIds: JSON.parse(config.test_ids_json), name: previous.name, workspaceId: request.auth.workspace.id, actorUserId: request.auth.id });
+      response.status(202).json({ scan });
     } catch (error) { next(error); }
   });
 
@@ -289,17 +320,21 @@ function addAudit(db, auth, action, entityType, entityId, metadata = {}) {
 }
 
 function buildReport(scan, retests) {
+  const openFindings = scan.findings.filter((finding) => finding.status !== 'FIXED');
+  const currentRisk = calculateRisk(openFindings);
+  const priority = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+  const ordered = [...scan.findings].sort((a, b) => Number(a.status === 'FIXED') - Number(b.status === 'FIXED') || (priority[a.severity] ?? 4) - (priority[b.severity] ?? 4));
   const severityCounts = scan.findings.reduce((counts, finding) => ({ ...counts, [finding.severity]: (counts[finding.severity] || 0) + 1 }), {});
   return {
     id: `report_${scan.id}`,
     generatedAt: scan.completed_at || now(),
-    executiveSummary: scan.findings.length
-      ? `${scan.project_name} có ${scan.findings.length} phát hiện cần xử lý. Ưu tiên finding có mức độ cao nhất trước khi triển khai.`
+    executiveSummary: openFindings.length
+      ? `${scan.project_name} còn ${openFindings.length} phát hiện cần xử lý. Ưu tiên: ${ordered[0].title}.`
       : `${scan.project_name} không có phát hiện từ các security test đã chạy.`,
-    risk: { score: scan.risk_score, level: scan.risk_level, severityCounts },
+    risk: { ...currentRisk, initialScore: scan.risk_score, severityCounts },
     scope: { project: scan.project_name, target: scan.target_name, targetType: scan.target_type, testsRun: scan.total_tests },
     scan,
-    findings: scan.findings,
+    findings: ordered,
     retests,
     methodology: "Payload xác định trước và rule đánh giá response từ GreenShield security test registry v1.",
   };

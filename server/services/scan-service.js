@@ -41,6 +41,11 @@ export function createScanService({ db, origin }) {
       db.prepare("UPDATE scans SET completed_tests = completed_tests + 1 WHERE id = ?").run(scanId);
     }
     const findings = db.prepare("SELECT severity FROM findings WHERE scan_id = ?").all(scanId);
+    const errors = db.prepare("SELECT COUNT(*) AS count FROM test_executions WHERE scan_id=? AND status='ERROR'").get(scanId).count;
+    if (errors) {
+      failScan(scanId, new Error(`${errors} bài kiểm thử không chạy được. Kiểm tra kết nối và chạy lại scan.`));
+      return;
+    }
     const risk = calculateRisk(findings);
     const completedAt = now();
     db.transaction(() => {
@@ -59,6 +64,7 @@ export function createScanService({ db, origin }) {
     db.prepare("UPDATE test_executions SET status='RUNNING', started_at=? WHERE id=?").run(now(), execution.id);
     try {
       const result = await sendTargetRequest(target, test.payload, { origin });
+      if (!result.ok) throw new Error(`Target trả về HTTP ${result.status}.`);
       const evaluation = test.evaluate(result);
       const status = evaluation.vulnerable ? "FAILED" : "PASSED";
       db.prepare(`UPDATE test_executions SET status=?, request_json=?, response_json=?, extracted_evidence=?,
@@ -145,6 +151,7 @@ export function createScanService({ db, origin }) {
     db.prepare("UPDATE test_executions SET status='RUNNING', started_at=? WHERE id=?").run(now(), executionId);
     try {
       const result = await sendTargetRequest(target, test.payload, { origin });
+      if (!result.ok) throw new Error(`Target trả về HTTP ${result.status}.`);
       const evaluation = test.evaluate(result);
       const status = evaluation.vulnerable ? "FAILED" : "PASSED";
       db.prepare(`UPDATE test_executions SET status=?, request_json=?, response_json=?, extracted_evidence=?, duration_ms=?, completed_at=? WHERE id=?`)

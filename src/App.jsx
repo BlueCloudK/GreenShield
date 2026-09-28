@@ -12,6 +12,7 @@ import NewProjectPage from "./pages/NewProjectPage";
 import NewProjectScanPage from "./pages/NewProjectScanPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProductsPage from "./pages/ProductsPage";
+import PrivacyPage from "./pages/PrivacyPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import ReportPage from "./pages/ReportPage";
@@ -33,6 +34,7 @@ export default function App() {
         <Route element={<LoginPage />} path="/login" />
         <Route element={<AboutPage />} path="/about" />
         <Route element={<ContactPage />} path="/contact" />
+        <Route element={<PrivacyPage />} path="/privacy" />
       </Route>
 
       <Route element={<ProtectedRoute><ProductLayout /></ProtectedRoute>} path="/app">

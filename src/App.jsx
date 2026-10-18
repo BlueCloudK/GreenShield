@@ -4,6 +4,7 @@ import { ProductLayout } from "./components/layout/ProductLayout";
 import { LoadingState } from "./components/ui/PageState";
 import { useAuth } from "./context/AuthContext";
 import AboutPage from "./pages/AboutPage";
+import BillingPage from "./pages/BillingPage";
 import ContactPage from "./pages/ContactPage";
 import DashboardPage from "./pages/DashboardPage";
 import HomePage from "./pages/HomePage";
@@ -39,6 +40,7 @@ export default function App() {
 
       <Route element={<ProtectedRoute><ProductLayout /></ProtectedRoute>} path="/app">
         <Route index element={<DashboardPage />} />
+        <Route element={<BillingPage />} path="billing" />
         <Route element={<ProjectsPage />} path="projects" />
         <Route element={<NewProjectPage />} path="projects/new" />
         <Route element={<ProjectDetailPage />} path="projects/:projectId" />

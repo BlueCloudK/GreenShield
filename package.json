@@ -16,6 +16,7 @@
     "demo:record": "node scripts/record-demo.mjs"
   },
   "dependencies": {
+    "@payos/node": "2.0.5",
     "@vitejs/plugin-react": "^4.3.4",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^13.0.3",

@@ -4,7 +4,7 @@ import { createApp } from "../server/app.js";
 
 test("complete vulnerable scan, evidence, fixed retest, and report flow", async (context) => {
   const port = 41000 + Math.floor(Math.random() * 1000);
-  const app = createApp({ databasePath: ":memory:", serveStatic: false, origin: `http://127.0.0.1:${port}` });
+  const app = createApp({ databasePath: ":memory:", serveStatic: false, allowUnverifiedSignup: true, origin: `http://127.0.0.1:${port}` });
   const server = app.listen(port, "127.0.0.1");
   context.after(() => new Promise((resolve) => server.close(resolve)));
   const baseUrl = `http://127.0.0.1:${port}`;

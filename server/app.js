@@ -11,6 +11,7 @@ import { calculateRisk } from "./security/scoring.js";
 import { sendTargetRequest } from "./security/target-client.js";
 import { createScanService, httpError } from "./services/scan-service.js";
 import { sendVerificationOtp } from "./services/email-service.js";
+import { createPayments } from "./payments/service.js";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const now = () => new Date().toISOString();
@@ -27,6 +28,7 @@ export function createApp(options = {}) {
   app.disable("x-powered-by");
   app.set("trust proxy", 1);
   app.use(express.json({ limit: "200kb" }));
+  app.use('/api/payments', createPayments({ db, requireAuth, env: options.paymentEnv || process.env, client: options.payosClient }));
 
   app.get("/api/health", (_request, response) => response.json({ ok: true, service: "greenshield" }));
 
@@ -51,7 +53,7 @@ export function createApp(options = {}) {
   app.post("/api/auth/send-otp", async (request, response, next) => {
     try {
       const result = createEmailOtp(db, request.body || {});
-      await sendVerificationOtp(result.email, result.otp, result.name);
+      await (options.sendVerificationOtp || sendVerificationOtp)(result.email, result.otp, result.name);
       response.status(200).json({ sent: true, email: result.email });
     } catch (error) { next(error); }
   });
@@ -66,6 +68,7 @@ export function createApp(options = {}) {
 
   app.post("/api/auth/register", (request, response, next) => {
     try {
+      if (options.allowUnverifiedSignup !== true) throw httpError(403, "Vui lòng đăng ký bằng mã xác nhận email.");
       const user = registerUser(db, request.body || {});
       response.status(201).json({ user });
     } catch (error) { next(error); }
@@ -285,7 +288,7 @@ export function createApp(options = {}) {
     app.use(express.static(distDir, { index: false }));
     app.use((request, response, next) => {
       if (request.method !== "GET") return next();
-      return response.sendFile(path.join(distDir, "index.html"));
+      return response.sendFile('index.html', { root: distDir });
     });
   }
 

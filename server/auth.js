@@ -88,10 +88,10 @@ export function createEmailOtp(db, input) {
     throw error;
   }
 
-  // Xoá OTP cũ của email này
-  db.prepare("DELETE FROM email_verifications WHERE email = ?").run(email);
+  // Invalidate prior codes, but retain send history for the rate limit.
+  db.prepare("UPDATE email_verifications SET expires_at=? WHERE email=?").run(new Date().toISOString(), email);
 
-  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const otp = String(crypto.randomInt(100000, 1000000));
   const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
   const now = new Date().toISOString();
   const expiresAt = new Date(Date.now() + OTP_TTL_MS).toISOString();
@@ -129,7 +129,7 @@ export function verifyEmailOtp(db, email, otp) {
   }
 
   if (record.attempts >= OTP_MAX_ATTEMPTS) {
-    db.prepare("DELETE FROM email_verifications WHERE id = ?").run(record.id);
+    db.prepare("UPDATE email_verifications SET expires_at=? WHERE id=?").run(new Date().toISOString(), record.id);
     const error = new Error("Quá nhiều lần nhập sai. Vui lòng yêu cầu mã xác nhận mới.");
     error.status = 429;
     throw error;
@@ -165,6 +165,7 @@ export function verifyEmailOtp(db, email, otp) {
     db.prepare("INSERT INTO workspace_members (workspace_id, user_id, role, created_at) VALUES (?, ?, 'OWNER', ?)")
       .run(workspaceId, userId, now);
     db.prepare("DELETE FROM email_verifications WHERE id = ?").run(record.id);
+    db.prepare("UPDATE users SET email_verified_at=? WHERE id=?").run(now, userId);
   })();
 
   return createSession(db, userId);

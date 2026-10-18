@@ -1,0 +1,79 @@
+# PayOS Integration
+
+## Current Boundary
+
+- Based on `origin/feature/otp`, commit `697999a`.
+- Real SDK adapter is implemented; disabled by default. No real transactions tested.
+- Bank/channel credentials and the approved assessment price are still pending.
+- This branch uses the original SQLite backend. It has NOT merged the uncommitted
+  Supabase/async DB and evaluator changes in the main checkout. Do not deploy it
+  over the current public app: reconcile those changes and port the transaction
+  boundaries to the async adapter first, then test against disposable Postgres.
+- One API process is assumed; not a multi-process payment queue.
+- Orders are assessment purchases, not recurring subscriptions. A receipt does
+  not automatically grant scan quota or confirm service fulfilment.
+
+## Setup After Bank Approval
+
+1. Enter `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, and `PAYOS_CHECKSUM_KEY` in the ignored
+   backend `.env`. Never use `VITE_` prefixes or paste secrets into chat/logs.
+2. Set `PAYOS_ASSESSMENT_AMOUNT_VND` to an approved integer VND amount (2000 to
+   100000000), and `PAYOS_PUBLIC_ORIGIN` to the actual frontend origin. There is
+   intentionally no default/sample billable price.
+3. Keep `PAYOS_ENABLED=false` until an explicit integration-test authorization.
+   PayOS has no sandbox; enabling this adapter uses the live merchant API.
+4. For a separately authorized non-production live test, use a bank/channel that
+   the owner has approved, a small approved amount, and an HTTPS public origin.
+   Register the webhook below in the payOS channel dashboard. The account owner
+   must perform any actual bank transfer; automated tests must never do so.
+5. `NODE_ENV=production` with payments enabled fails closed even with valid keys.
+   Production activation requires a separate approved change, not an env toggle.
+
+Official references:
+- https://payos.vn/docs/sdks/back-end/node/
+- https://payos.vn/docs/moi-truong-test/
+
+## API
+
+Authenticated workspace endpoints:
+- `GET /api/payments/config`: enabled flag and server product/price, no secrets.
+- `GET /api/payments/orders`: latest 50 orders in the current workspace.
+- `GET /api/payments/orders/:id`: workspace-scoped persisted order.
+- `POST /api/payments/orders`: `{ "productId": "assessment" }` plus a stable
+  `Idempotency-Key` header (16-80 alphanumeric, underscore or hyphen characters).
+  Only verified email users with OWNER/ADMIN role can create or mutate orders.
+  The server rejects client-supplied amount and callback URL fields.
+- `POST /api/payments/orders/:id/refresh`: query PayOS, validate ID/code/amount,
+  and apply the provider status. Never use URL status parameters as evidence.
+- `POST /api/payments/orders/:id/cancel`: cancel with PayOS then reconcile.
+
+Unauthenticated provider endpoint:
+- `POST /api/payments/webhook`: verify signature using the official SDK, check
+  order code/link ID/amount and re-fetch provider status. Unknown signed orders
+  (including channel verification samples) are acknowledged without fulfilment.
+  A PAID transition and its unique receipt are committed in one DB transaction.
+
+## Failure Recovery
+
+- `UNKNOWN` means link creation may have succeeded remotely. Reuse the same
+  idempotency key and refresh/cancel the existing order; do not create a second
+  order merely because the request timed out. No automatic create retries.
+- If a create succeeded but its response was lost, refresh can recover the link
+  ID/status. PayOS GET does not supply a checkout URL: the UI does not fabricate
+  one. Investigate in the merchant dashboard or cancel before a new purchase.
+- Do not downgrade PAID on delayed pending/cancelled callbacks.
+- A failed webhook reconciliation returns non-2xx so it can be retried.
+- Poll/refresh after bank payment if webhook delivery is delayed. A durable
+  reconciliation worker and production monitoring are still rollout work.
+- Existing unverified accounts are not silently marked verified by migration.
+  Add an authenticated verification flow for existing accounts before rollout.
+
+## Verification
+
+`npm test` covers OTP verification, direct signup bypass, resend limits, official
+signature verification with local test keys, forged/mismatched webhooks,
+idempotent creation, timeout recovery, duplicate receipt prevention, role and
+workspace boundaries, cancellation and the existing scan/retest flow.
+
+Run `npm run build` for the React build. No production deploy or real provider
+request is part of these checks.

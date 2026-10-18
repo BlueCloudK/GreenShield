@@ -3,13 +3,14 @@ import express from "express";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { authenticate, clearSessionCookie, destroySession, loginUser, optionalAuthenticate, registerUser, setSessionCookie } from "./auth.js";
+import { authenticate, clearSessionCookie, createEmailOtp, destroySession, loginUser, optionalAuthenticate, registerUser, setSessionCookie, verifyEmailOtp } from "./auth.js";
 import { createDatabase, json } from "./db/index.js";
 import { respondAsDemoTarget } from "./security/demo-target.js";
 import { encryptSecret } from "./security/secret-provider.js";
 import { calculateRisk } from "./security/scoring.js";
 import { sendTargetRequest } from "./security/target-client.js";
 import { createScanService, httpError } from "./services/scan-service.js";
+import { sendVerificationOtp } from "./services/email-service.js";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const now = () => new Date().toISOString();
@@ -44,6 +45,22 @@ export function createApp(options = {}) {
       db.prepare("INSERT INTO contact_requests (id, full_name, email, subject, message, created_at) VALUES (?, ?, ?, ?, ?, ?)")
         .run(id("contact"), fullName, email, subject, message, now());
       response.status(201).json({ received: true });
+    } catch (error) { next(error); }
+  });
+
+  app.post("/api/auth/send-otp", async (request, response, next) => {
+    try {
+      const result = createEmailOtp(db, request.body || {});
+      await sendVerificationOtp(result.email, result.otp, result.name);
+      response.status(200).json({ sent: true, email: result.email });
+    } catch (error) { next(error); }
+  });
+
+  app.post("/api/auth/verify-otp", async (request, response, next) => {
+    try {
+      const session = verifyEmailOtp(db, request.body?.email, request.body?.otp);
+      setSessionCookie(response, session.token, request.secure || request.headers["x-forwarded-proto"] === "https");
+      response.status(201).json({ user: session.user });
     } catch (error) { next(error); }
   });
 

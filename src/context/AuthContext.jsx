@@ -35,6 +35,25 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function sendOtp(account) {
+    try {
+      const result = await post("/api/auth/send-otp", account);
+      return { ok: true, email: result.email };
+    } catch (error) {
+      return { ok: false, message: error.message };
+    }
+  }
+
+  async function verifyOtp(email, otp) {
+    try {
+      const result = await post("/api/auth/verify-otp", { email, otp });
+      setUser(result.user);
+      return { ok: true, user: result.user };
+    } catch (error) {
+      return { ok: false, message: error.message };
+    }
+  }
+
   async function logout() {
     try { await post("/api/auth/logout"); } finally { setUser(null); }
   }
@@ -45,6 +64,8 @@ export function AuthProvider({ children }) {
     isAuthenticated: Boolean(user),
     login,
     register,
+    sendOtp,
+    verifyOtp,
     logout,
   }), [user, loading]);
 

@@ -1,4 +1,4 @@
-import { LockKeyhole, ShieldCheck, UserPlus } from "lucide-react";
+import { LockKeyhole, Mail, RotateCcw, ShieldCheck, UserPlus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
@@ -22,15 +22,18 @@ function isValidEmail(email) {
 }
 
 export default function LoginPage() {
+  // mode: "register" | "login" | "otp"
   const [mode, setMode] = useState("register");
   const [registerForm, setRegisterForm] = useState(initialRegisterForm);
   const [loginForm, setLoginForm] = useState(initialLoginForm);
+  const [otpForm, setOtpForm] = useState({ email: "", otp: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [registerTouched, setRegisterTouched] = useState({});
   const [loginTouched, setLoginTouched] = useState({});
-  const { isAuthenticated, login, register } = useAuth();
+  const { isAuthenticated, login, sendOtp, verifyOtp } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTo = location.state?.from?.pathname || "/app";
@@ -46,6 +49,13 @@ export default function LoginPage() {
       setMode("login");
     }
   }, [location.search, location.state?.authMode]);
+
+  // Đếm ngược thời gian chờ gửi lại OTP
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   const registerErrors = useMemo(() => {
     const errors = {};
@@ -99,21 +109,57 @@ export default function LoginPage() {
     }
 
     setSubmitting(true);
-    const result = await register(registerForm);
+    const result = await sendOtp(registerForm);
     setSubmitting(false);
+
     if (!result.ok) {
       setError(result.message);
       return;
     }
 
-    setLoginForm({
-      email: registerForm.email.trim().toLowerCase(),
-      password: registerForm.password,
-    });
-    setRegisterForm(initialRegisterForm);
-    setRegisterTouched({});
-    setMode("login");
-    setSuccess("Tài khoản đã được tạo. Kiểm tra lại email/mật khẩu rồi đăng nhập để vào workspace.");
+    // Chuyển sang bước nhập OTP
+    setOtpForm({ email: result.email, otp: "" });
+    setResendCooldown(60);
+    setMode("otp");
+    setSuccess(`Mã xác nhận đã gửi đến ${result.email}. Vui lòng kiểm tra hộp thư (kể cả Spam).`);
+  }
+
+  async function handleVerifyOtp(event) {
+    event.preventDefault();
+    setError("");
+
+    const trimmedOtp = otpForm.otp.trim().replace(/\s/g, "");
+    if (trimmedOtp.length !== 6 || !/^\d+$/.test(trimmedOtp)) {
+      setError("Mã xác nhận gồm 6 chữ số.");
+      return;
+    }
+
+    setSubmitting(true);
+    const result = await verifyOtp(otpForm.email, trimmedOtp);
+    setSubmitting(false);
+
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+
+    // Đăng nhập thành công sau xác nhận OTP
+    navigate(redirectTo, { replace: true });
+  }
+
+  async function handleResendOtp() {
+    if (resendCooldown > 0) return;
+    setError("");
+    setSubmitting(true);
+    const result = await sendOtp({ ...registerForm, email: otpForm.email });
+    setSubmitting(false);
+
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    setResendCooldown(60);
+    setSuccess("Mã xác nhận mới đã được gửi. Vui lòng kiểm tra hộp thư.");
   }
 
   async function handleLogin(event) {
@@ -139,25 +185,28 @@ export default function LoginPage() {
   }
 
   const isRegisterMode = mode === "register";
+  const isOtpMode = mode === "otp";
 
   return (
     <section className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
       <div className="glass-panel rounded-3xl p-8">
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-300/10 text-emerald-200">
-          {isRegisterMode ? <UserPlus size={26} aria-hidden="true" /> : <LockKeyhole size={26} aria-hidden="true" />}
+          {isOtpMode ? <Mail size={26} aria-hidden="true" /> : isRegisterMode ? <UserPlus size={26} aria-hidden="true" /> : <LockKeyhole size={26} aria-hidden="true" />}
         </div>
         <p className="section-kicker mt-8">GreenShield workspace</p>
         <h1 className="mt-3 text-4xl font-black text-white">
-          {isRegisterMode ? "Tạo tài khoản dùng thử" : "Đăng nhập GreenShield"}
+          {isOtpMode ? "Xác nhận email" : isRegisterMode ? "Tạo tài khoản dùng thử" : "Đăng nhập GreenShield"}
         </h1>
         <p className="mt-4 leading-7 text-slate-400">
-          Đăng ký workspace để tạo project, kết nối target, chạy security tests và theo dõi retest bằng dữ liệu được lưu trên server.
+          {isOtpMode
+            ? `Nhập mã 6 chữ số đã gửi đến ${otpForm.email} để hoàn tất đăng ký.`
+            : "Đăng ký workspace để tạo project, kết nối target, chạy security tests và theo dõi retest bằng dữ liệu được lưu trên server."}
         </p>
         <div className="mt-8 grid gap-3">
           {[
             "Mật khẩu được băm trước khi lưu.",
             "Phiên đăng nhập dùng cookie HttpOnly.",
-            "Demo target không chứa secret hoặc dữ liệu khách hàng thật.",
+            isOtpMode ? "OTP hết hạn sau 10 phút." : "Demo target không chứa secret hoặc dữ liệu khách hàng thật.",
           ].map((item) => (
             <div className="flex gap-3 rounded-2xl border border-white/10 bg-slate-950/45 p-3 text-sm leading-6 text-slate-300" key={item}>
               <ShieldCheck className="mt-0.5 shrink-0 text-emerald-200" size={17} aria-hidden="true" />
@@ -168,25 +217,78 @@ export default function LoginPage() {
       </div>
 
       <div className="glass-panel rounded-3xl p-6 sm:p-8">
-        <div className="grid grid-cols-2 rounded-2xl border border-white/10 bg-slate-950/45 p-1">
-          {[
-            ["register", "Đăng ký nhanh"],
-            ["login", "Đăng nhập"],
-          ].map(([value, label]) => (
-            <button
-              className={`focus-ring rounded-xl px-3 py-2.5 text-sm font-black transition ${
-                mode === value ? "bg-emerald-300 text-slate-950" : "text-slate-300 hover:bg-white/[0.06] hover:text-white"
-              }`}
-              key={value}
-              onClick={() => switchMode(value)}
-              type="button"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {!isOtpMode && (
+          <div className="grid grid-cols-2 rounded-2xl border border-white/10 bg-slate-950/45 p-1">
+            {[
+              ["register", "Đăng ký nhanh"],
+              ["login", "Đăng nhập"],
+            ].map(([value, label]) => (
+              <button
+                className={`focus-ring rounded-xl px-3 py-2.5 text-sm font-black transition ${
+                  mode === value ? "bg-emerald-300 text-slate-950" : "text-slate-300 hover:bg-white/[0.06] hover:text-white"
+                }`}
+                key={value}
+                onClick={() => switchMode(value)}
+                type="button"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
-        {isRegisterMode ? (
+        {isOtpMode ? (
+          <form className="mt-6" onSubmit={handleVerifyOtp}>
+            {/* Email hiển thị (readonly) */}
+            <div className="mb-5 rounded-2xl border border-emerald-500/30 bg-emerald-950/30 px-4 py-3">
+              <p className="text-xs text-emerald-400 font-semibold uppercase tracking-widest mb-1">Gửi đến</p>
+              <p className="text-sm text-emerald-100 font-medium">{otpForm.email}</p>
+            </div>
+
+            <FormField label="Mã xác nhận (6 chữ số)" name="otp">
+              <input
+                autoComplete="one-time-code"
+                className={`${inputClasses} text-center text-2xl font-black tracking-widest`}
+                inputMode="numeric"
+                maxLength={6}
+                name="otp"
+                onChange={(event) => {
+                  setOtpForm((current) => ({ ...current, otp: event.target.value }));
+                  setError("");
+                }}
+                placeholder="• • • • • •"
+                value={otpForm.otp}
+                autoFocus
+              />
+            </FormField>
+
+            {success ? <p className="mt-4 rounded-2xl bg-emerald-300/10 p-3 text-sm text-emerald-100">{success}</p> : null}
+            {error ? <p className="mt-4 rounded-2xl bg-rose-400/10 p-3 text-sm text-rose-200">{error}</p> : null}
+
+            <Button className="mt-6 w-full" data-testid="otp-submit" disabled={submitting} type="submit">
+              {submitting ? "Đang xác nhận..." : "Xác nhận & tạo tài khoản"}
+            </Button>
+
+            <div className="mt-4 flex items-center justify-between">
+              <button
+                className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition disabled:opacity-40 disabled:cursor-not-allowed"
+                disabled={resendCooldown > 0 || submitting}
+                onClick={handleResendOtp}
+                type="button"
+              >
+                <RotateCcw size={14} />
+                {resendCooldown > 0 ? `Gửi lại sau ${resendCooldown}s` : "Gửi lại mã"}
+              </button>
+              <button
+                className="text-sm text-slate-400 hover:text-white transition"
+                onClick={() => { setMode("register"); setError(""); setSuccess(""); }}
+                type="button"
+              >
+                ← Quay lại
+              </button>
+            </div>
+          </form>
+        ) : isRegisterMode ? (
           <form className="mt-6" onSubmit={handleRegister}>
             <div className="space-y-5">
               <FormField error={registerTouched.name ? registerErrors.name : ""} label="Họ tên" name="name">
@@ -237,7 +339,7 @@ export default function LoginPage() {
             </div>
             {error ? <p className="mt-4 rounded-2xl bg-rose-400/10 p-3 text-sm text-rose-200">{error}</p> : null}
             <Button className="mt-6 w-full" data-testid="register-submit" disabled={submitting} type="submit">
-              {submitting ? "Đang tạo..." : "Tạo tài khoản"}
+              {submitting ? "Đang gửi mã..." : "Gửi mã xác nhận"}
             </Button>
           </form>
         ) : (

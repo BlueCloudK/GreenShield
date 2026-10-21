@@ -2,6 +2,25 @@
 
 ## Deployment state
 
+### OTP and PayOS rollout: 2026-10-21
+
+Production is on API image `greenshield-api:payos-1ecc3e5` and Vercel deployment
+`dpl_6JdXzYYj3DTujU54E1kTAfXaAKFA`, promoted to `https://www.greenshieldai.tech`.
+SMTP authentication and PayOS webhook confirmation passed. Checkout is enabled
+with the approved, visibly labelled sample price of 2000 VND; no payment link or
+bank transfer was created during deployment verification.
+
+Seven live verification groups passed, covering authentication, payment guards,
+benchmark completion/cancellation, scan, report, fixed retest, workspace
+isolation and SPA routes. Temporary verification accounts were removed.
+
+The old stopped container `greenshield-api-before-payos-1ecc3e5` and its private
+runtime backup under `/opt/greenshield/releases/payos-1ecc3e5/` are retained for
+rollback. The new SMTP/PayOS secrets live only in the root-protected runtime
+file on EC2 and the user's ignored local configuration, not Git or Vercel.
+Do not overwrite `/opt/greenshield/runtime.env` from the older SSM parameter:
+its payment/email additions have not been synchronized there.
+
 The selected architecture is Vercel frontend, AWS EC2 API/scan worker, and
 Supabase Postgres. The application supports async SQLite locally and Postgres
 through `DATABASE_URL`. Server provisioning does not imply the public app

@@ -37,6 +37,20 @@ Official references:
 - https://payos.vn/docs/sdks/back-end/node/
 - https://payos.vn/docs/moi-truong-test/
 
+## Production rollout (2026-10-21)
+
+- API image: `greenshield-api:payos-1ecc3e5`; previous container and runtime retained
+  on EC2 for rollback. No database tables or customer records are removed.
+- Runtime credentials are in the root-only `/opt/greenshield/runtime.env` on EC2.
+  New PayOS/SMTP values are not synchronized to the older SSM runtime parameter;
+  preserve this file rather than overwriting it with that parameter during recovery.
+- SMTP authentication and PayOS webhook registration were verified on the server.
+- Webhook: `https://www.greenshieldai.tech/api/payments/webhook`.
+- Checkout is enabled at the owner-approved sample amount of 2000 VND, clearly
+  labelled in the UI. No payment link or bank transfer was created during rollout.
+- Deployment checks seed and remove only their own temporary accounts. They check
+  configuration and reject checkout for unverified accounts without calling PayOS.
+
 ## Local Preview Without Live Requests
 
 The prepared `.env.payos.local` pins an isolated local SQLite database and port

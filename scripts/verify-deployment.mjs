@@ -41,6 +41,23 @@ try {
   assert.equal((await api('/api/health')).ok, true);
   assert.equal((await fetch(`${baseUrl}/api/evaluations`)).status, 401);
   await register();
+  const payment = await api('/api/payments/config');
+  assert.equal(payment.product.id, 'assessment');
+  if (process.env.EXPECT_PAYOS_ENABLED === 'true') {
+    assert.equal(payment.enabled, true);
+    assert.equal(payment.product.amount, 2000);
+    assert.equal(payment.product.priceIsSample, true);
+  }
+  assert.equal((await api('/api/auth/me')).user.emailVerified, false);
+  const blockedCheckout = await fetch(`${baseUrl}/api/payments/orders`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', cookie },
+    body: JSON.stringify({ productId: 'assessment' }),
+    signal: AbortSignal.timeout(20_000),
+  });
+  assert.equal(blockedCheckout.status, payment.enabled ? 403 : 503);
+  assert.equal((await api('/api/payments/orders')).orders.length, 0);
+  checks += 1;
   assert.equal((await api('/api/evaluations/connection', 'POST', { demo: true })).result.http, 200);
   const benchmark = await api('/api/evaluations', 'POST', { demo: true, suite: 20, name: 'Deployment verification' });
   let evaluation;

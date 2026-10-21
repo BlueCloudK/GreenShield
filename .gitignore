@@ -18,6 +18,7 @@ playwright-report/
 test-results/
 artifacts/demo/*
 !artifacts/demo/.gitkeep
+artifacts/deploy/
 data/*.db
 data/*.db-shm
 data/*.db-wal
@@ -29,3 +30,5 @@ data/*.db-wal
 .codex-chrome-profile*/
 
 figma-*.png
+
+.vercel

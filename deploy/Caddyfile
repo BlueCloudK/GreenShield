@@ -1,0 +1,8 @@
+greenshield.47.128.150.181.sslip.io {
+    handle /api/* {
+        reverse_proxy 127.0.0.1:3000
+    }
+    handle {
+        respond "Not found" 404
+    }
+}

@@ -1,14 +1,25 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import crypto from "node:crypto";
 import { createApp } from "../server/app.js";
 
 test("complete vulnerable scan, evidence, fixed retest, and report flow", async (context) => {
   const port = 41000 + Math.floor(Math.random() * 1000);
-  const app = createApp({ databasePath: ":memory:", serveStatic: false, origin: `http://127.0.0.1:${port}` });
+  const app = await createApp({
+    databasePath: process.env.TEST_DATABASE_URL ? undefined : ":memory:",
+    databaseUrl: process.env.TEST_DATABASE_URL,
+    serveStatic: false,
+    origin: `http://127.0.0.1:${port}`,
+  });
   const server = app.listen(port, "127.0.0.1");
-  context.after(() => new Promise((resolve) => server.close(resolve)));
+  context.after(async () => {
+    await app.locals.scans.drain();
+    await new Promise((resolve) => server.close(resolve));
+    await app.locals.db.close();
+  });
   const baseUrl = `http://127.0.0.1:${port}`;
   let cookie = "";
+  const email = `owner-${crypto.randomUUID()}@example.com`;
 
   async function api(path, options = {}) {
     const response = await fetch(`${baseUrl}${path}`, {
@@ -24,14 +35,14 @@ test("complete vulnerable scan, evidence, fixed retest, and report flow", async 
 
   const registration = await api("/api/auth/register", {
     method: "POST",
-    body: JSON.stringify({ name: "Demo Owner", email: "owner@example.com", company: "Demo Co", password: "password123" }),
+    body: JSON.stringify({ name: "Demo Owner", email, company: "Demo Co", password: "password123" }),
   });
   assert.equal(registration.user.workspace.role, "OWNER");
   const login = await api("/api/auth/login", {
     method: "POST",
-    body: JSON.stringify({ email: "owner@example.com", password: "password123" }),
+    body: JSON.stringify({ email, password: "password123" }),
   });
-  assert.equal(login.user.email, "owner@example.com");
+  assert.equal(login.user.email, email);
 
   const { project } = await api("/api/projects", {
     method: "POST",
@@ -78,7 +89,26 @@ test("complete vulnerable scan, evidence, fixed retest, and report flow", async 
   assert.ok(report.report.retests.some((item) => item.finding_id === findingId && item.status === "FIXED"));
   assert.ok(report.report.risk.score <= report.report.risk.initialScore);
 
+  const ownerCookie = cookie;
+  const otherEmail = `other-${crypto.randomUUID()}@example.com`;
+  await api("/api/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ name: "Other Owner", email: otherEmail, password: "password123" }),
+  });
+  await api("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email: otherEmail, password: "password123" }),
+  });
+  const inaccessible = await fetch(`${baseUrl}/api/scans/${scan.id}`, { headers: { cookie } });
+  assert.equal(inaccessible.status, 404);
+  cookie = ownerCookie;
+  assert.equal(typeof (await api("/api/dashboard")).metrics.active_projects, "number");
+
   const retry = await api(`/api/scans/${scan.id}/retry`, { method: "POST", body: "{}" });
   assert.notEqual(retry.scan.id, scan.id);
   assert.equal(retry.scan.project_id, project.id);
+  await app.locals.scans.drain();
+  await app.locals.db.prepare("UPDATE scans SET status='RUNNING' WHERE id=?").run(retry.scan.id);
+  await app.locals.scans.recoverInterrupted();
+  assert.equal((await api(`/api/scans/${retry.scan.id}`)).scan.status, "FAILED");
 });

@@ -17,6 +17,7 @@ import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import ReportPage from "./pages/ReportPage";
 import ScanDetailPage from "./pages/ScanDetailPage";
+import EndpointEvaluatorPage from "./pages/EndpointEvaluatorPage";
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -39,6 +40,7 @@ export default function App() {
 
       <Route element={<ProtectedRoute><ProductLayout /></ProtectedRoute>} path="/app">
         <Route index element={<DashboardPage />} />
+        <Route element={<EndpointEvaluatorPage />} path="evaluator" />
         <Route element={<ProjectsPage />} path="projects" />
         <Route element={<NewProjectPage />} path="projects/new" />
         <Route element={<ProjectDetailPage />} path="projects/:projectId" />

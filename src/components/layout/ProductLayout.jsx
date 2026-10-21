@@ -1,4 +1,4 @@
-import { FolderKanban, LayoutDashboard, LogOut, Menu, Plus, X } from "lucide-react";
+import { Activity, FolderKanban, LayoutDashboard, LogOut, Menu, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -8,6 +8,7 @@ import { Button } from "../ui/Button";
 const navigation = [
   { label: "Tổng quan", to: "/app", icon: LayoutDashboard, end: true },
   { label: "Projects", to: "/app/projects", icon: FolderKanban },
+  { label: "Đánh giá chatbot", to: "/app/evaluator", icon: Activity },
 ];
 
 export function ProductLayout() {

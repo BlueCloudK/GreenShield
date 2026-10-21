@@ -1,6 +1,12 @@
 node_modules
 dist
 .git
+.env
+.env.*
+artifacts
+coverage
+test-results
+playwright-report
 .DS_Store
 .codex-screenshots
 .codex-chrome-profile*

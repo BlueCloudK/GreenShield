@@ -1,5 +1,3 @@
-PRAGMA foreign_keys = ON;
-
 CREATE TABLE IF NOT EXISTS schema_migrations (
   version TEXT PRIMARY KEY,
   applied_at TEXT NOT NULL
@@ -177,4 +175,3 @@ CREATE INDEX IF NOT EXISTS idx_scans_project ON scans(project_id, created_at DES
 CREATE INDEX IF NOT EXISTS idx_executions_scan ON test_executions(scan_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_findings_scan ON findings(scan_id, severity);
 CREATE INDEX IF NOT EXISTS idx_retests_finding ON retests(finding_id, created_at DESC);
-

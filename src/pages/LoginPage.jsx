@@ -1,4 +1,4 @@
-import { LockKeyhole, ShieldCheck, UserPlus } from "lucide-react";
+import { LockKeyhole, UserPlus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
@@ -153,18 +153,6 @@ export default function LoginPage() {
         <p className="mt-4 leading-7 text-slate-400">
           Đăng ký workspace để tạo project, kết nối target, chạy security tests và theo dõi retest bằng dữ liệu được lưu trên server.
         </p>
-        <div className="mt-8 grid gap-3">
-          {[
-            "Mật khẩu được băm trước khi lưu.",
-            "Phiên đăng nhập dùng cookie HttpOnly.",
-            "Demo target không chứa secret hoặc dữ liệu khách hàng thật.",
-          ].map((item) => (
-            <div className="flex gap-3 rounded-2xl border border-white/10 bg-slate-950/45 p-3 text-sm leading-6 text-slate-300" key={item}>
-              <ShieldCheck className="mt-0.5 shrink-0 text-emerald-200" size={17} aria-hidden="true" />
-              <span>{item}</span>
-            </div>
-          ))}
-        </div>
       </div>
 
       <div className="glass-panel rounded-3xl p-6 sm:p-8">

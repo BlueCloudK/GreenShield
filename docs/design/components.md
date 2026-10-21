@@ -7,3 +7,7 @@ Use 8px cards, compact section headers, dense list rows, status badges, and list
 Reuse ProductLayout, Button and FormField. Use a compact configuration form,
 four benchmark metrics and a table/inspector split; keep benchmark scores separate
 from security risk scores. Mark deterministic fixture results explicitly as demo.
+
+Billing uses unframed offer and history sections, an overflow-contained table on
+mobile, explicit pending/unknown/paid/cancelled states, and existing Button and
+lucide controls. An unavailable provider disables checkout, not just its styling.

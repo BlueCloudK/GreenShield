@@ -31,7 +31,7 @@ test("endpoint mapping, masking and safety validation", async () => {
 });
 
 test("authenticated benchmark fixture completes, persists, isolates and cancels", async (context) => {
-  const app = await createApp({ databasePath: ":memory:", serveStatic: false });
+  const app = await createApp({ databasePath: ":memory:", serveStatic: false, allowUnverifiedSignup: true });
   const server = app.listen(0, "127.0.0.1");
   await new Promise((resolve) => server.once("listening", resolve));
   context.after(async () => {

@@ -47,6 +47,10 @@ npm run dev:full
 
 Open `http://127.0.0.1:5173`, register, then log in. Vite proxies `/api` to port `3000`.
 
+Registration now requires email OTP. Configure `SMTP_USER` and `SMTP_PASS` in
+the ignored `.env`; the direct registration API is disabled. OTP send history
+is retained so resending or exhausting attempts does not bypass the send limit.
+
 ## Run with Docker
 
 ```bash
@@ -99,7 +103,27 @@ Contact requests are stored in the `contact_requests` table. The current MVP doe
 - The included vulnerable/fixed target is controlled demo infrastructure.
 - Detection uses explicit deterministic rules, not an LLM judge.
 - PDF export uses the browser print dialog.
-- Billing, invitations, production queues, and provider integrations are not implemented.
+- Invitations and production queues are not implemented.
+
+## PayOS (Disabled By Default)
+
+The real PayOS adapter uses `@payos/node` 2.0.5. `/app/billing` contains checkout
+and workspace-scoped order history. Prices come only from server configuration.
+The public redirect cannot mark an order paid; verified webhook processing also
+checks the provider's authoritative order status. Payment receipts are applied
+once, including when webhooks repeat or a create request times out.
+
+PayOS has no separate sandbox. No real PayOS calls are made by `npm test`:
+provider requests are stubbed while webhook signatures use the official SDK.
+Keep `PAYOS_ENABLED=false` until live integration testing is explicitly approved.
+The local sample price is 2000 VND, labelled as a sample rather than a final quote.
+Enter keys in the ignored `.env.payos.local`, then run `npm run payments:check`:
+the check reveals only whether each key exists and makes no PayOS request.
+`npm run build` and `npm run dev:payments` serve the isolated local preview at
+`http://127.0.0.1:3102/app/billing`. OTP and payments support both SQLite and
+Postgres; existing accounts can verify email on the billing page.
+The adapter refuses activation with `NODE_ENV=production` until a separately
+approved production rollout changes that guard. See [docs/PAYOS.md](docs/PAYOS.md).
 
 ## Deployment
 

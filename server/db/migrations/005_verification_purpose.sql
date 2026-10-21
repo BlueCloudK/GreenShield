@@ -1,0 +1,2 @@
+ALTER TABLE email_verifications ADD COLUMN purpose TEXT NOT NULL DEFAULT 'REGISTER';
+ALTER TABLE email_verifications ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE CASCADE;

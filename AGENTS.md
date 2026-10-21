@@ -8,7 +8,7 @@
 - Prefer Tailwind CSS for styling if installed.
 - Do not add heavy dependencies without explaining why.
 - Use mock data for demo features unless a backend already exists.
-- Never implement real payment processing in this demo.
+- PayOS integration is authorized, but must remain disabled by default and must not be enabled or deployed to production without separate user approval. Never execute a real payment during automated tests.
 - Run lint/build/test scripts when available before finishing.
 - Update README with setup and run instructions.
 

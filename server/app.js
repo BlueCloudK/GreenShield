@@ -3,15 +3,7 @@ import express from "express";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  authenticate,
-  clearSessionCookie,
-  destroySession,
-  loginUser,
-  optionalAuthenticate,
-  registerUser,
-  setSessionCookie,
-} from "./auth.js";
+import { authenticate, clearSessionCookie, createEmailOtp, destroySession, loginUser, optionalAuthenticate, registerUser, setSessionCookie, verifyEmailOtp, getUserContext } from "./auth.js";
 import { createDatabase, json } from "./db/index.js";
 import { respondAsDemoTarget } from "./security/demo-target.js";
 import { encryptSecret } from "./security/secret-provider.js";
@@ -19,6 +11,8 @@ import { calculateRisk } from "./security/scoring.js";
 import { sendTargetRequest } from "./security/target-client.js";
 import { createScanService, httpError } from "./services/scan-service.js";
 import { createEvaluator } from "./evaluator/service.js";
+import { sendVerificationOtp } from "./services/email-service.js";
+import { createPayments } from "./payments/service.js";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const now = () => new Date().toISOString();
@@ -46,6 +40,7 @@ export async function createApp(options = {}) {
     next();
   });
   app.use('/api/evaluations', evaluator.router);
+  app.use('/api/payments', createPayments({ db, requireAuth, env: options.paymentEnv || process.env, client: options.payosClient }));
   app.get("/api/health", async (_request, response) => {
     await db.prepare("SELECT 1 AS healthy").get();
     response.json({ ok: true, service: "greenshield" });
@@ -85,8 +80,25 @@ export async function createApp(options = {}) {
     }
   });
 
+  app.post("/api/auth/send-otp", async (request, response, next) => {
+    try {
+      const result = await createEmailOtp(db, request.body || {});
+      await (options.sendVerificationOtp || sendVerificationOtp)(result.email, result.otp, result.name);
+      response.status(200).json({ sent: true, email: result.email });
+    } catch (error) { next(error); }
+  });
+
+  app.post("/api/auth/verify-otp", async (request, response, next) => {
+    try {
+      const session = await verifyEmailOtp(db, request.body?.email, request.body?.otp);
+      setSessionCookie(response, session.token, request.secure || request.headers["x-forwarded-proto"] === "https");
+      response.status(201).json({ user: session.user });
+    } catch (error) { next(error); }
+  });
+
   app.post("/api/auth/register", async (request, response, next) => {
     try {
+      if (options.allowUnverifiedSignup !== true) throw httpError(403, "Vui lòng đăng ký bằng mã xác nhận email.");
       const user = await registerUser(db, request.body || {});
       response.status(201).json({ user });
     } catch (error) {
@@ -111,6 +123,20 @@ export async function createApp(options = {}) {
   });
 
   app.get("/api/auth/me", readAuth, (request, response) => response.json({ user: request.auth }));
+
+  app.post('/api/auth/email-verification/send', requireAuth, async (request, response, next) => {
+    try {
+      const result = await createEmailOtp(db, {}, { userId: request.auth.id });
+      await (options.sendVerificationOtp || sendVerificationOtp)(result.email, result.otp, result.name);
+      response.json({ sent: true, email: result.email });
+    } catch (error) { next(error); }
+  });
+  app.post('/api/auth/email-verification/confirm', requireAuth, async (request, response, next) => {
+    try {
+      await verifyEmailOtp(db, request.auth.email, request.body?.otp, { userId: request.auth.id });
+      response.json({ user: await getUserContext(db, request.auth.id) });
+    } catch (error) { next(error); }
+  });
 
   app.post("/api/demo-target/:targetId/chat", async (request, response) => {
     if (request.headers["x-greenshield-internal"] !== (process.env.INTERNAL_DEMO_TOKEN || "greenshield-local-demo")) {
@@ -382,7 +408,7 @@ export async function createApp(options = {}) {
     app.use(express.static(distDir, { index: false }));
     app.use((request, response, next) => {
       if (request.method !== "GET") return next();
-      return response.sendFile(path.join(distDir, "index.html"));
+      return response.sendFile('index.html', { root: distDir });
     });
   }
 

@@ -2,10 +2,12 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { chromium } from 'playwright';
 import { createDatabase } from '../server/db/index.js';
+import { registerUser } from '../server/auth.js';
 
 const base = process.argv[2] || 'http://127.0.0.1:5173';
 const browser = await chromium.launch({ headless: true });
 const created = [];
+const db = await createDatabase();
 try {
   for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
     const context = await browser.newContext({ viewport, acceptDownloads: true });
@@ -14,9 +16,7 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     const email = `evaluator-ui-${crypto.randomUUID()}@example.com`;
     const password = crypto.randomBytes(24).toString('base64url');
-    const registered = await context.request.post(`${base}/api/auth/register`, { data: { name: 'UI verification', email, password } });
-    assert.equal(registered.status(), 201);
-    const { user } = await registered.json();
+    const user = await registerUser(db, { name: 'UI verification', email, password });
     created.push({ id: user.id, workspace: user.workspace.id, email });
     assert.equal((await context.request.post(`${base}/api/auth/login`, { data: { email, password } })).status(), 200);
     await page.goto(`${base}/app/evaluator`);
@@ -46,7 +46,6 @@ try {
   }
 } finally {
   await browser.close();
-  const db = await createDatabase();
   try {
     for (const account of created) {
       const row = await db.prepare('SELECT id FROM users WHERE id=? AND email=?').get(account.id, account.email);

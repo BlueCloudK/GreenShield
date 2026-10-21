@@ -48,6 +48,16 @@ export async function runMigrations(db) {
       if (db.dialect === "postgres") await db.exec("SELECT pg_advisory_xact_lock(78293451)");
       if (await applied.get(filename)) return;
       await db.exec(sql);
+      if (db.dialect === 'postgres') {
+        for (const table of ['email_verifications', 'payment_orders', 'payment_receipts', 'endpoint_evaluations']) {
+          await db.exec(`DO $$ BEGIN IF to_regclass('greenshield.${table}') IS NOT NULL THEN
+            ALTER TABLE greenshield.${table} ENABLE ROW LEVEL SECURITY;
+            REVOKE ALL ON greenshield.${table} FROM PUBLIC;
+            IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname='anon') THEN REVOKE ALL ON greenshield.${table} FROM anon; END IF;
+            IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN REVOKE ALL ON greenshield.${table} FROM authenticated; END IF;
+          END IF; END $$;`);
+        }
+      }
       await markApplied.run(filename, new Date().toISOString());
     })();
   }
@@ -129,6 +139,8 @@ function normalizeRow(row) {
     "recent_scans",
     "high_findings",
     "fixed_findings",
+    "cnt",
+    "order_code",
   ]) {
     if (typeof row[key] === "string" && /^\d+$/.test(row[key])) row[key] = Number(row[key]);
   }

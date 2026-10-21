@@ -9,6 +9,7 @@ test("complete vulnerable scan, evidence, fixed retest, and report flow", async 
     databasePath: process.env.TEST_DATABASE_URL ? undefined : ":memory:",
     databaseUrl: process.env.TEST_DATABASE_URL,
     serveStatic: false,
+    allowUnverifiedSignup: true,
     origin: `http://127.0.0.1:${port}`,
   });
   const server = app.listen(port, "127.0.0.1");

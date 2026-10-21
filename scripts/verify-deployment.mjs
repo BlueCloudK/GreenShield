@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { createDatabase } from '../server/db/index.js';
+import { registerUser } from '../server/auth.js';
 
 const baseUrl = process.argv[2];
 if (!baseUrl || !process.env.DATABASE_URL) throw new Error('Provide APP URL and DATABASE_URL for cleanup.');
 const accounts = [];
+const db = await createDatabase();
 let cookie = '';
 let checks = 0;
 
@@ -28,8 +30,9 @@ async function api(path, method = 'GET', input) {
 async function register() {
   const email = `deployment-check-${crypto.randomUUID()}@example.com`;
   const password = crypto.randomBytes(24).toString('base64url');
-  const result = await api('/api/auth/register', 'POST', { name: 'Deployment verification', email, password });
-  accounts.push({ id: result.user.id, workspace: result.user.workspace.id, email });
+  // Seed owned temporary accounts through the admin DB connection, not an OTP bypass.
+  const user = await registerUser(db, { name: 'Deployment verification', email, password });
+  accounts.push({ id: user.id, workspace: user.workspace.id, email });
   await api('/api/auth/login', 'POST', { email, password });
   checks += 1;
 }
@@ -103,7 +106,6 @@ try {
   }
   console.log(JSON.stringify({ verified: true, checks, benchmark: 'COMPLETED', benchmarkCancel: true, scan: 'COMPLETED', retest: 'FIXED', workspaceIsolation: true, spaRouting: true }));
 } finally {
-  const db = await createDatabase();
   try {
     for (const account of accounts) {
       // Only delete the temporary accounts and workspaces created by this run.

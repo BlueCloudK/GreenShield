@@ -76,9 +76,13 @@ async function setup(t, { disabled = false, timeout = false } = {}) {
   return { db, states, call, login, create, webhook, creates: () => creates };
 }
 
-test('PayOS is disabled by default and cannot be activated in production', () => {
+test('PayOS requires explicit production approval and an HTTPS origin', () => {
   assert.equal(paymentConfig({}).enabled, false);
   assert.throws(() => paymentConfig({ ...env, NODE_ENV: 'production' }), /not authorized/);
+  const production = { ...env, NODE_ENV: 'production', PAYOS_PRODUCTION_APPROVED: 'true', PAYOS_PUBLIC_ORIGIN: 'https://www.greenshieldai.tech' };
+  assert.equal(paymentConfig(production).enabled, true);
+  assert.throws(() => paymentConfig({ ...production, PAYOS_PRODUCTION_APPROVED: 'false' }), /not authorized/);
+  assert.throws(() => paymentConfig({ ...production, PAYOS_PUBLIC_ORIGIN: 'http://127.0.0.1:3102' }), /origin/);
   assert.throws(() => paymentConfig({ ...env, PAYOS_API_KEY: '' }), /Configure/);
   assert.throws(() => paymentConfig({ ...env, PAYOS_PUBLIC_ORIGIN: 'https://user:pass@example.com' }), /origin/);
 });

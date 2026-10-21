@@ -12,13 +12,15 @@ export function paymentConfig(env = process.env) {
   const amount = Number(env.PAYOS_ASSESSMENT_AMOUNT_VND);
   const priced = Number.isSafeInteger(amount) && amount >= 2000 && amount <= 100_000_000;
   if (!enabled) return { enabled: false, amount: priced ? amount : null };
-  if (env.NODE_ENV === 'production') throw new Error('PayOS production activation is not authorized.');
+  if (env.NODE_ENV === 'production' && env.PAYOS_PRODUCTION_APPROVED !== 'true') {
+    throw new Error('PayOS production activation is not authorized.');
+  }
   if (!priced || !['PAYOS_CLIENT_ID', 'PAYOS_API_KEY', 'PAYOS_CHECKSUM_KEY', 'PAYOS_PUBLIC_ORIGIN'].every(key => env[key])) {
     throw new Error('Configure PayOS server keys, public origin and an approved VND amount before enabling payments.');
   }
   const origin = new URL(env.PAYOS_PUBLIC_ORIGIN);
   if (origin.username || origin.password || origin.pathname !== '/' || origin.search || origin.hash ||
-      (origin.protocol !== 'https:' && !(origin.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(origin.hostname)))) {
+      (origin.protocol !== 'https:' && !(env.NODE_ENV !== 'production' && origin.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(origin.hostname)))) {
     throw new Error('PAYOS_PUBLIC_ORIGIN must be an HTTPS origin (localhost HTTP is development-only).');
   }
   return { enabled: true, amount, origin: origin.origin };

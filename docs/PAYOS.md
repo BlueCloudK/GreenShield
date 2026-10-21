@@ -28,8 +28,10 @@
    the owner has approved, a small approved amount, and an HTTPS public origin.
    Register the webhook below in the payOS channel dashboard. The account owner
    must perform any actual bank transfer; automated tests must never do so.
-5. `NODE_ENV=production` with payments enabled fails closed even with valid keys.
-   Production activation requires a separate approved change, not an env toggle.
+5. The owner authorized production deployment on 2026-10-21. Activation requires
+   `PAYOS_ENABLED=true`, `PAYOS_PRODUCTION_APPROVED=true`, valid server keys and
+   `PAYOS_PUBLIC_ORIGIN=https://www.greenshieldai.tech`. Defaults remain disabled.
+   Keep the sample-price label visible until the owner selects a selling price.
 
 Official references:
 - https://payos.vn/docs/sdks/back-end/node/

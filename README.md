@@ -122,8 +122,9 @@ the check reveals only whether each key exists and makes no PayOS request.
 `npm run build` and `npm run dev:payments` serve the isolated local preview at
 `http://127.0.0.1:3102/app/billing`. OTP and payments support both SQLite and
 Postgres; existing accounts can verify email on the billing page.
-The adapter refuses activation with `NODE_ENV=production` until a separately
-approved production rollout changes that guard. See [docs/PAYOS.md](docs/PAYOS.md).
+Production activation requires both `PAYOS_ENABLED=true` and
+`PAYOS_PRODUCTION_APPROVED=true`, plus valid server keys and an HTTPS origin.
+Keep both flags off unless the owner has approved the rollout. See [docs/PAYOS.md](docs/PAYOS.md).
 
 ## Deployment
 

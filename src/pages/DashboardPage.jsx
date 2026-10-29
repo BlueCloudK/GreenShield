@@ -4,6 +4,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { ErrorState, LoadingState } from "../components/ui/PageState";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useApiResource } from "../hooks/useApiResource";
+import { UsageBanner } from '../components/payments/UsageBanner';
 
 const metrics = [
   ["active_projects", "Projects đang hoạt động", FolderKanban],
@@ -27,6 +28,7 @@ export default function DashboardPage() {
         <Link className="focus-ring rounded-lg bg-emerald-300 px-4 py-2.5 text-sm font-bold text-slate-950 lg:hidden" to="/app/projects/new">Tạo project</Link>
       </div>
 
+      <UsageBanner />
       {error ? <div className="mt-6"><ErrorState message={error} onRetry={reload} /></div> : null}
       {data ? (
         <>

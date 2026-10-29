@@ -10,8 +10,16 @@
   The new tables have RLS enabled and Data API roles revoked during migration.
 - Payments and OTP were tested on disposable local Postgres, not the live Supabase DB.
 - This is not a durable multi-process payment/reconciliation queue.
-- Orders are assessment purchases, not recurring subscriptions. A receipt does
-  not automatically grant scan quota or confirm service fulfilment.
+- New orders purchase one calendar month of `builder_pro` or `team`. A verified
+  payment atomically records a receipt and subscription period. Legacy assessment
+  orders remain in history and do not silently receive subscription entitlements.
+- Approved catalog: Builder Pro 149,000 VND/month (1 application, 300 tests),
+  Team 599,000 VND/month (5 applications, 1,500 tests), Custom contact-only.
+- Each selected security test, benchmark probe and finding retest counts against
+  the active period. Reservations are atomic; failed operations are refunded.
+  Renewals begin after the latest paid period. Unused tests do not carry forward.
+- Monthly payments are manual renewals, not recurring debit mandates. Team jobs
+  are prioritized while queued; work already running is not preempted.
 
 ## Setup After Bank Approval
 

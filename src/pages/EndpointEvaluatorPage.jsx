@@ -4,6 +4,8 @@ import { Button } from "../components/ui/Button";
 import { FormField, inputClasses } from "../components/ui/FormField";
 import { EvaluationReport } from "../components/evaluator/EvaluationReport";
 import { api, post } from "../lib/api";
+import { useApiResource } from '../hooks/useApiResource';
+import { UsageBanner } from '../components/payments/UsageBanner';
 
 const defaults = {
   name: "Chatbot benchmark",
@@ -18,15 +20,18 @@ const defaults = {
   delay: 500,
   conversation: "none",
   suite: 10,
-  demo: true,
+  demo: false,
   authorized: false,
+  projectId: '',
 };
 const statuses = { QUEUED: "Đang chuẩn bị", RUNNING: "Đang đánh giá", COMPLETED: "Hoàn tất", FAILED: "Thất bại", CANCELLED: "Đã dừng" };
 export default function EndpointEvaluatorPage() {
+  const projects = useApiResource('/api/projects');
   const [config, setConfig] = useState(defaults);
   const [current, setCurrent] = useState(null);
   const [evaluation, setEvaluation] = useState(null);
   const [history, setHistory] = useState([]);
+  const [suites, setSuites] = useState([]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [connection, setConnection] = useState(null);
@@ -37,9 +42,20 @@ export default function EndpointEvaluatorPage() {
     setConfig((old) => ({ ...old, [key]: value }));
     setConnection(null);
   };
+  async function chooseProject(projectId) {
+    setPending(true); setError(''); setConnection(null);
+    try {
+      const { project } = await api(`/api/projects/${projectId}`);
+      const target = project.targets.find(item => item.type !== 'DEMO');
+      setConfig(old => ({ ...old, projectId, url: target?.base_url || '' }));
+      if (!target) setError('Ứng dụng chưa có endpoint. Kết nối endpoint trong project trước.');
+    } catch (e) { setError(e.message); } finally { setPending(false); }
+  }
   async function loadHistory() {
     try {
-      setHistory((await api("/api/evaluations")).evaluations);
+      const data = await api('/api/evaluations');
+      setHistory(data.evaluations);
+      setSuites(data.suites || []);
       setHistoryError("");
     } catch (e) {
       setHistoryError(e.message);
@@ -98,6 +114,7 @@ export default function EndpointEvaluatorPage() {
       <div className="border-b border-white/10 pb-4">
         <h1 className="text-2xl font-bold">Đánh giá chatbot</h1>
       </div>
+      <UsageBanner />
       <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_260px]">
         <div className="min-w-0">
           <form
@@ -108,7 +125,7 @@ export default function EndpointEvaluatorPage() {
             className="mt-5"
           >
             <fieldset disabled={disabled}>
-              <div className="mb-4 flex flex-wrap items-center gap-4">
+              {import.meta.env.DEV && <div className="mb-4 flex flex-wrap items-center gap-4">
                 <label className="flex items-center gap-2 text-sm">
                   <input type="radio" name="endpoint-mode" checked={config.demo} onChange={() => update("demo", true)} />
                   <FlaskConical size={16} /> Demo fixture
@@ -117,22 +134,25 @@ export default function EndpointEvaluatorPage() {
                   <input type="radio" name="endpoint-mode" checked={!config.demo} onChange={() => update("demo", false)} />
                   Endpoint thật
                 </label>
-              </div>
+              </div>}
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField label="Tên phiên">
                   <input className={inputClasses} value={config.name} maxLength={100} onChange={(e) => update("name", e.target.value)} />
                 </FormField>
                 <FormField label="Bộ benchmark">
                   <select className={inputClasses} value={config.suite} onChange={(e) => update("suite", Number(e.target.value))}>
-                    {[10, 20, 30].map((n) => (
-                      <option value={n} key={n}>
-                        {n} test
+                    {suites.map(({ value, tests }) => (
+                      <option value={value} key={value}>
+                        {tests} bài kiểm thử
                       </option>
                     ))}
                   </select>
                 </FormField>
                 {!config.demo && (
                   <>
+                    <div className="sm:col-span-2"><FormField label="Ứng dụng đã kết nối" name="benchmark-project"><select id="benchmark-project" required className={inputClasses} value={config.projectId} onChange={e => chooseProject(e.target.value)}><option value="">Chọn ứng dụng</option>{projects.data?.projects.filter(project => project.target_type !== 'DEMO').map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select></FormField>
+                      {(!projects.data?.projects.length || projects.error) && <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-400"><span>{projects.error || 'Chưa có ứng dụng trong workspace.'}</span><Button to="/app/projects/new" variant="ghost">Tạo project</Button></div>}
+                    </div>
                     <div className="sm:col-span-2">
                       <FormField label="Endpoint URL">
                         <input
@@ -141,7 +161,7 @@ export default function EndpointEvaluatorPage() {
                           className={inputClasses}
                           placeholder="https://api.example.com/chat"
                           value={config.url}
-                          onChange={(e) => update("url", e.target.value)}
+                          readOnly
                         />
                       </FormField>
                     </div>

@@ -36,7 +36,7 @@ export default function LoginPage() {
   const { isAuthenticated, login, sendOtp, verifyOtp } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const redirectTo = location.state?.from?.pathname || "/app";
+  const redirectTo = location.state?.from ? `${location.state.from.pathname}${location.state.from.search || ''}` : '/app';
 
   useEffect(() => {
     if (isAuthenticated && !location.state?.skipAuthRedirect) {
@@ -59,7 +59,7 @@ export default function LoginPage() {
 
   const registerErrors = useMemo(() => {
     const errors = {};
-    if (!registerForm.name.trim()) errors.name = "Nhập tên để tạo tài khoản demo.";
+    if (!registerForm.name.trim()) errors.name = "Nhập họ tên của bạn.";
     if (!isValidEmail(registerForm.email)) errors.email = "Nhập email hợp lệ.";
     if (registerForm.password.length < 8) errors.password = "Mật khẩu cần ít nhất 8 ký tự.";
     return errors;
@@ -68,7 +68,7 @@ export default function LoginPage() {
   const loginErrors = useMemo(() => {
     const errors = {};
     if (!isValidEmail(loginForm.email)) errors.email = "Nhập email đã đăng ký.";
-    if (!loginForm.password) errors.password = "Nhập mật khẩu demo.";
+    if (!loginForm.password) errors.password = "Nhập mật khẩu.";
     return errors;
   }, [loginForm]);
 
@@ -168,7 +168,7 @@ export default function LoginPage() {
 
     if (Object.keys(loginErrors).length) {
       setLoginTouched({ email: true, password: true });
-      setError("Vui lòng nhập đúng email và mật khẩu demo.");
+      setError("Vui lòng nhập đúng email và mật khẩu.");
       return;
     }
 
@@ -195,7 +195,7 @@ export default function LoginPage() {
         </div>
         <p className="section-kicker mt-8">GreenShield workspace</p>
         <h1 className="mt-3 text-4xl font-black text-white">
-          {isOtpMode ? "Xác nhận email" : isRegisterMode ? "Tạo tài khoản dùng thử" : "Đăng nhập GreenShield"}
+          {isOtpMode ? "Xác nhận email" : isRegisterMode ? "Tạo tài khoản GreenShield" : "Đăng nhập GreenShield"}
         </h1>
         <p className="mt-4 leading-7 text-slate-400">
           {isOtpMode

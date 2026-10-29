@@ -13,7 +13,7 @@ export default function ProjectDetailPage() {
   const { data, error, loading, reload } = useApiResource(`/api/projects/${projectId}`);
   const [action, setAction] = useState("");
   const [actionError, setActionError] = useState("");
-  const [targetForm, setTargetForm] = useState({ name: "Ứng dụng AI staging", baseUrl: "", credential: "", responseField: "message" });
+  const [targetForm, setTargetForm] = useState({ name: "Ứng dụng AI staging", baseUrl: "", credential: "", responseField: "message", authorized: false });
 
   async function addDemoTarget() {
     setAction("creating"); setActionError("");
@@ -39,6 +39,7 @@ export default function ProjectDetailPage() {
         baseUrl: targetForm.baseUrl,
         credential: targetForm.credential,
         responseField: targetForm.responseField,
+        authorized: targetForm.authorized,
         headers: {},
         requestTemplate: { prompt: "{{prompt}}" },
       });
@@ -83,7 +84,8 @@ export default function ProjectDetailPage() {
                 <FormField label="Bearer token (tùy chọn)" name="credential"><input autoComplete="off" className={inputClasses} name="credential" onChange={(event) => setTargetForm({ ...targetForm, credential: event.target.value })} placeholder="Được mã hóa khi lưu" type="password" value={targetForm.credential} /></FormField>
                 <FormField label="Response field" name="response-field"><input className={inputClasses} name="response-field" onChange={(event) => setTargetForm({ ...targetForm, responseField: event.target.value })} placeholder="message" required value={targetForm.responseField} /></FormField>
               </div>
-              <Button className="w-full" disabled={action === "creating"} type="submit">{action === "creating" ? "Đang lưu..." : "Lưu target"}</Button>
+              <label className="flex items-start gap-2 text-sm text-slate-300"><input type="checkbox" required checked={targetForm.authorized} onChange={event => setTargetForm({ ...targetForm, authorized: event.target.checked })} className="mt-1 accent-emerald-300" />Tôi có quyền kiểm thử endpoint của ứng dụng này.</label>
+              <Button className="w-full" disabled={action === "creating" || !targetForm.authorized} type="submit">{action === "creating" ? "Đang lưu..." : "Lưu target"}</Button>
             </form>
           )}
         </section>

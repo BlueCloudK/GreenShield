@@ -16,7 +16,7 @@ import { PricingComparison } from "../components/pricing/PricingComparison";
 import { AttackSurfaceVisual } from "../components/security/AttackSurfaceVisual";
 import { Button } from "../components/ui/Button";
 import { useAuth } from "../context/AuthContext";
-import { pricingPlans } from "../data/scans";
+import { usePricingPlans } from '../hooks/usePricingPlans';
 
 const scanScopes = [
   {
@@ -108,7 +108,7 @@ const reportRows = [
   ["Kiểm tra lộ API đã đạt", "Lộ API", "Đạt", "Đã xác minh"],
 ];
 
-const planBadges = ["Kiểm thử", "Assessment", "Red team", "Dự án"];
+const planBadges = ['Cá nhân', 'Đội nhóm', 'Tùy chỉnh'];
 
 function severityClass(severity) {
   const classes = {
@@ -136,10 +136,11 @@ function SectionLabel({ children }) {
 }
 
 export default function HomePage() {
+  const pricingPlans = usePricingPlans();
   const { isAuthenticated } = useAuth();
   const scanRoute = isAuthenticated ? "/app/projects/new" : "/login";
   const scanState = isAuthenticated ? undefined : { from: { pathname: "/app/projects/new" } };
-  const primaryActionLabel = isAuthenticated ? "Tạo project" : "Dùng thử GreenShield";
+  const primaryActionLabel = isAuthenticated ? "Tạo project" : "Tạo tài khoản";
   const helperText = isAuthenticated
     ? "Tạo project để kết nối target, chạy scan và theo dõi kết quả retest."
     : "Đăng ký tài khoản để lưu scan và report. Bạn có thể xem trước cấu trúc báo cáo ở bên dưới.";
@@ -372,9 +373,9 @@ export default function HomePage() {
           </Button>
         </div>
 
-        <div className="mt-10 grid gap-4 lg:grid-cols-4">
+        <div className="mt-10 grid gap-4 lg:grid-cols-3">
           {pricingPlans.map((plan, index) => {
-            const isHighlighted = plan.name === "AI App Assessment";
+            const isHighlighted = plan.id === 'team';
 
             return (
               <article
@@ -406,6 +407,7 @@ export default function HomePage() {
                     </li>
                   ))}
                 </ul>
+                <Button className="mt-5 w-full" to={plan.id === 'custom' ? '/contact' : `/app/billing?plan=${plan.id}`} variant={isHighlighted ? 'primary' : 'secondary'}>{plan.ctaLabel}</Button>
               </article>
             );
           })}
@@ -432,7 +434,7 @@ export default function HomePage() {
               Yêu cầu assessment <ArrowRight size={17} aria-hidden="true" />
             </Button>
             <Button className="w-full sm:w-fit" to="/login" variant="secondary">
-              Chạy demo target
+              Tạo project
             </Button>
           </div>
         </div>

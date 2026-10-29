@@ -1,6 +1,6 @@
 # GreenShield MVP
 
-GreenShield is a functional sales-demo SaaS for testing AI chatbots, RAG endpoints, and agents:
+GreenShield is a subscription application for testing authorized AI chatbots, RAG endpoints, and agents:
 
 ```text
 Project -> Target -> Test Connection -> Scan -> Finding -> Fix -> Retest -> Report
@@ -8,14 +8,14 @@ Project -> Target -> Test Connection -> Scan -> Finding -> Fix -> Retest -> Repo
 
 ## Chatbot endpoint evaluator
 
-Open `/app/evaluator` after registering and signing in. Select **Demo fixture**
-and run a benchmark to see progress, category scores, latency, a test inspector,
-workspace-scoped history and JSON export. The 10/20/30-test suites and deterministic
-scoring were adapted from the supplied `ai-chatbot-endpoint-evaluator.zip`.
-Fixture results are explicitly marked as simulated and do not prove a model's capabilities.
+Open `/app/evaluator` after registering and signing in. Select an application
+connected in your workspace to run a benchmark, inspect evidence and export JSON.
+Suites include detection probes; the UI shows the total number charged to the
+monthly test allowance. Simulated fixtures remain available only in development
+and automated tests, with their reports explicitly classified as simulated.
 
-For an authorized real endpoint, choose **Endpoint thật**, set its public HTTPS
-URL, GET/POST method, headers/API key, JSON body with `{{PROMPT}}` and response
+For an authorized real endpoint, select its project, then set GET/POST method,
+headers/API key, JSON body with `{{PROMPT}}` and response
 path such as `choices[0].message.content`. Messages mode adds a conversation-recall
 test. Open-ended answers remain unscored pending semantic review. Benchmark scores
 are separate from security risk scores.
@@ -24,7 +24,7 @@ Requests use validated, pinned public DNS addresses; redirects, private networks
 unsafe headers and responses over 256 KB are blocked. Secrets are never persisted
 in the evaluation configuration and known secret values are masked in evidence.
 At most two jobs run per process, one per workspace, with a 90-second run deadline.
-Interrupted runs are failed on restart; this is a single-process demo worker,
+Interrupted runs are failed on restart; this is a single-process priority worker,
 not a distributed benchmark queue. Real endpoint requests may incur provider costs.
 
 The integration adds no Next.js, UI kit or new runtime dependencies. Run
@@ -103,7 +103,10 @@ Contact requests are stored in the `contact_requests` table. The current MVP doe
 - The included vulnerable/fixed target is controlled demo infrastructure.
 - Detection uses explicit deterministic rules, not an LLM judge.
 - PDF export uses the browser print dialog.
-- Invitations and production queues are not implemented.
+- Email invitations and durable/distributed queues are not implemented. Team owners
+  can add already-registered, verified members; queued Team work is prioritized.
+- Automatic GitHub repository synchronization is not implemented. Application
+  integration currently means connecting its authorized HTTPS endpoint in a project.
 
 ## PayOS (Disabled By Default)
 
@@ -116,7 +119,11 @@ once, including when webhooks repeat or a create request times out.
 PayOS has no separate sandbox. No real PayOS calls are made by `npm test`:
 provider requests are stubbed while webhook signatures use the official SDK.
 Keep `PAYOS_ENABLED=false` until live integration testing is explicitly approved.
-The local sample price is 2000 VND, labelled as a sample rather than a final quote.
+Approved subscriptions are `builder_pro` (149,000 VND/month, 1 active application,
+300 tests) and `team` (599,000 VND/month, 5 active applications, 1,500 tests).
+`custom` is contact-only. Prices and immutable purchase snapshots are owned by
+`server/payments/plans.js`, never supplied by the browser. The old assessment
+sample-price environment variables are no longer used for new orders.
 Enter keys in the ignored `.env.payos.local`, then run `npm run payments:check`:
 the check reveals only whether each key exists and makes no PayOS request.
 `npm run build` and `npm run dev:payments` serve the isolated local preview at
@@ -125,6 +132,24 @@ Postgres; existing accounts can verify email on the billing page.
 Production activation requires both `PAYOS_ENABLED=true` and
 `PAYOS_PRODUCTION_APPROVED=true`, plus valid server keys and an HTTPS origin.
 Keep both flags off unless the owner has approved the rollout. See [docs/PAYOS.md](docs/PAYOS.md).
+
+## Subscription Usage
+
+Choose a plan at `/products` or `/app/billing`; authentication returns the user to
+the selected plan. PayOS confirmation creates exactly one calendar-month period.
+Renewals and plan changes start after existing paid periods, without proration or
+overlap. Renewal is manual: no recurring bank debit is configured. Unused tests
+do not roll over. Existing paid assessment orders do not create subscriptions.
+
+Production enforces application limits and reserves the actual test count before
+a scan/benchmark starts. Each finding retest reserves one test. Failed operations
+return their reservation; history/reports remain readable after expiry. Team
+membership and switching are available at `/app/workspace`. Payment and membership
+administration are role-gated. `SUBSCRIPTIONS_REQUIRED=true` enables the same
+enforcement in a local preview; production always enforces it.
+
+Run `npm test`, `npm run build` and the disposable Postgres checks documented in
+`docs/PAYOS.md`. Never point automated payment tests at a live merchant client.
 
 ## Deployment
 

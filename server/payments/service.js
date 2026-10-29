@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import express from 'express';
 import { createPayOS } from './payos.js';
 import { transactionLock } from '../db/locks.js';
+import { plans } from './plans.js';
 
 const now = () => new Date().toISOString();
 const fail = (status, message) => Object.assign(new Error(message), { status });
@@ -9,13 +10,11 @@ const pending = new Set(['CREATING', 'PENDING', 'UNKNOWN']);
 
 export function paymentConfig(env = process.env) {
   const enabled = env.PAYOS_ENABLED === 'true';
-  const amount = Number(env.PAYOS_ASSESSMENT_AMOUNT_VND);
-  const priced = Number.isSafeInteger(amount) && amount >= 2000 && amount <= 100_000_000;
-  if (!enabled) return { enabled: false, amount: priced ? amount : null };
+  if (!enabled) return { enabled: false };
   if (env.NODE_ENV === 'production' && env.PAYOS_PRODUCTION_APPROVED !== 'true') {
     throw new Error('PayOS production activation is not authorized.');
   }
-  if (!priced || !['PAYOS_CLIENT_ID', 'PAYOS_API_KEY', 'PAYOS_CHECKSUM_KEY', 'PAYOS_PUBLIC_ORIGIN'].every(key => env[key])) {
+  if (!['PAYOS_CLIENT_ID', 'PAYOS_API_KEY', 'PAYOS_CHECKSUM_KEY', 'PAYOS_PUBLIC_ORIGIN'].every(key => env[key])) {
     throw new Error('Configure PayOS server keys, public origin and an approved VND amount before enabling payments.');
   }
   const origin = new URL(env.PAYOS_PUBLIC_ORIGIN);
@@ -23,13 +22,15 @@ export function paymentConfig(env = process.env) {
       (origin.protocol !== 'https:' && !(env.NODE_ENV !== 'production' && origin.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(origin.hostname)))) {
     throw new Error('PAYOS_PUBLIC_ORIGIN must be an HTTPS origin (localhost HTTP is development-only).');
   }
-  return { enabled: true, amount, origin: origin.origin };
+  return { enabled: true, origin: origin.origin };
 }
 
-export function createPayments({ db, requireAuth, env = process.env, client }) {
+export function createPayments({ db, requireAuth, credits, env = process.env, client }) {
   const config = paymentConfig(env);
   const payos = config.enabled ? (client || createPayOS(env)) : null;
   const router = express.Router();
+  const checkoutReady = config.enabled;
+  const catalog = () => ({ enabled: config.enabled, checkoutReady, plans });
   const get = code => db.prepare('SELECT * FROM payment_orders WHERE order_code=?').get(code);
   const safeOrder = order => {
     const { idempotency_key, created_by, workspace_id, ...safe } = order;
@@ -70,13 +71,14 @@ export function createPayments({ db, requireAuth, env = process.env, client }) {
     await transactionLock(db, `payment:${order.id}`);
     validateProvider(order, data);
     const latest = await get(order.order_code);
-    if (latest.status === 'PAID') return latest;
+    if (latest.status === 'PAID') { await credits.grant(latest); return latest; }
     if (data.status === 'PAID') {
       if (!Number.isSafeInteger(data.amountPaid) || data.amountPaid < order.amount) throw fail(409, 'Số tiền nhận chưa đủ.');
       const paidAt = now();
       await db.prepare("UPDATE payment_orders SET status='PAID', paid_at=?, updated_at=? WHERE id=?").run(paidAt, paidAt, order.id);
       await db.prepare('INSERT INTO payment_receipts (order_id,provider_reference,amount,paid_at) VALUES (?,?,?,?)')
         .run(order.id, data.id, order.amount, paidAt);
+      await credits.grant(latest);
     } else if (['PENDING', 'CANCELLED', 'EXPIRED'].includes(data.status) && pending.has(latest.status)) {
       await db.prepare('UPDATE payment_orders SET status=?,updated_at=? WHERE id=?').run(data.status, now(), order.id);
     }
@@ -114,10 +116,10 @@ export function createPayments({ db, requireAuth, env = process.env, client }) {
     } catch (error) { next(error); }
   });
 
+  router.get('/catalog', (_request, response) => response.json(catalog()));
   router.use(requireAuth);
-  router.get('/config', (_request, response) => response.json({
-    enabled: config.enabled,
-    product: { id: 'assessment', name: 'AI App Assessment', amount: config.amount, currency: 'VND', priceIsSample: env.PAYOS_PRICE_IS_SAMPLE === 'true' },
+  router.get('/config', async (request, response) => response.json({
+    ...catalog(), usage: await credits.summary(request.auth.workspace.id),
   }));
   router.get('/orders', async (request, response) => response.json({
     orders: (await db.prepare('SELECT * FROM payment_orders WHERE workspace_id=? ORDER BY created_at DESC LIMIT 50').all(request.auth.workspace.id)).map(safeOrder),
@@ -127,34 +129,44 @@ export function createPayments({ db, requireAuth, env = process.env, client }) {
   });
   router.post('/orders', enabled, buyer, async (request, response, next) => {
     try {
-      if (request.body?.productId !== 'assessment' || Object.keys(request.body).some(key => key !== 'productId')) throw fail(400, 'Chỉ gửi mã sản phẩm, không gửi giá từ trình duyệt.');
+      if (!checkoutReady) throw fail(503, 'Gói sử dụng chưa mở bán. Vui lòng liên hệ GreenShield.');
+      const product = plans.find(plan => plan.id === request.body?.productId && plan.amount != null);
+      if (!product || Object.keys(request.body).some(key => key !== 'productId')) throw fail(400, 'Chỉ gửi mã gói hợp lệ, không gửi giá từ trình duyệt.');
       const key = request.headers['idempotency-key'];
       if (typeof key !== 'string' || !/^[a-zA-Z0-9_-]{16,80}$/.test(key)) throw fail(400, 'Thiếu mã chống tạo đơn trùng.');
       const reservation = await db.transaction(async () => {
         await transactionLock(db, `checkout:${request.auth.workspace.id}`);
         const existing = await db.prepare('SELECT * FROM payment_orders WHERE workspace_id=? AND idempotency_key=?').get(request.auth.workspace.id, key);
-        if (existing) return { order: existing, created: false };
+        if (existing) {
+          if (existing.product_id !== product.id) throw fail(409, 'Mã yêu cầu đã được dùng cho gói khác.');
+          return { order: existing, created: false };
+        }
         const inFlight = await db.prepare("SELECT * FROM payment_orders WHERE workspace_id=? AND status IN ('CREATING','PENDING','UNKNOWN') LIMIT 1").get(request.auth.workspace.id);
-        if (inFlight) return { order: inFlight, created: false };
+        if (inFlight) {
+          if (inFlight.product_id !== product.id) throw fail(409, 'Hãy xử lý đơn đang chờ trước khi chọn gói khác.');
+          return { order: inFlight, created: false };
+        }
         const id = crypto.randomUUID();
         const code = Date.now() * 1000 + crypto.randomInt(1000);
         const stamp = now();
-        await db.prepare(`INSERT INTO payment_orders (id,workspace_id,created_by,idempotency_key,order_code,product_id,product_name,amount,status,created_at,updated_at)
-          VALUES (?,?,?,?,?,'assessment','AI App Assessment',?,'CREATING',?,?)`)
-          .run(id, request.auth.workspace.id, request.auth.id, key, code, config.amount, stamp, stamp);
+        await db.prepare(`INSERT INTO payment_orders (id,workspace_id,created_by,idempotency_key,order_code,product_id,product_name,amount,status,created_at,updated_at,
+          plan_key,test_allowance,project_allowance,member_allowance,processing_priority)
+          VALUES (?,?,?,?,?,?,?,?,'CREATING',?,?,?,?,?,?,?)`)
+          .run(id, request.auth.workspace.id, request.auth.id, key, code, product.id, product.name, product.amount, stamp, stamp,
+            product.id, product.tests, product.projects, product.members, product.priority);
         return { order: await get(code), created: true };
       })();
       if (!reservation.created) return response.json({ order: safeOrder(reservation.order) });
       const { id, order_code: code } = reservation.order;
       try {
         const data = await payos.paymentRequests.create({
-          orderCode: code, amount: config.amount, description: `GS ${code}`,
-          items: [{ name: 'AI App Assessment', quantity: 1, price: config.amount }],
+          orderCode: code, amount: product.amount, description: `GS ${code}`,
+          items: [{ name: product.name, quantity: 1, price: product.amount }],
           returnUrl: `${config.origin}/app/billing?order=${id}`,
           cancelUrl: `${config.origin}/app/billing?order=${id}`,
           expiredAt: Math.floor(Date.now() / 1000) + 1800,
         });
-        if (data.orderCode !== code || data.amount !== config.amount || data.currency !== 'VND' || !data.paymentLinkId) throw new Error('Mismatched provider response');
+        if (data.orderCode !== code || data.amount !== product.amount || data.currency !== 'VND' || !data.paymentLinkId) throw new Error('Mismatched provider response');
         const url = checkoutUrl(data.checkoutUrl);
         await db.prepare("UPDATE payment_orders SET payment_link_id=?,checkout_url=?,status=CASE WHEN status='CREATING' THEN 'PENDING' ELSE status END,updated_at=? WHERE id=?")
           .run(data.paymentLinkId, url, now(), id);

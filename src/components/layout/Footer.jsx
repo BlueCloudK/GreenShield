@@ -24,7 +24,7 @@ export function Footer() {
         <div>
           <h3 className="font-bold text-white">Triển khai</h3>
           <p className="mt-3 text-sm leading-6 text-slate-400">
-            Bắt đầu bằng phiên scan dùng thử, sau đó mở rộng sang assessment theo phạm vi, retest và báo cáo cho đội kỹ thuật hoặc quản lý.
+            Builder Pro cho developer cá nhân, Team cho nhóm phát triển và assessment theo phạm vi cho ứng dụng phức tạp.
           </p>
           <div className="mt-3 flex gap-4 text-sm"><Link className="text-emerald-200 hover:underline" to="/contact">Liên hệ</Link><Link className="text-emerald-200 hover:underline" to="/privacy">Quyền riêng tư</Link></div>
         </div>

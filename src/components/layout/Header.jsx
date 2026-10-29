@@ -19,7 +19,7 @@ export function Header() {
   const { isAuthenticated, user, logout } = useAuth();
   const scanRoute = isAuthenticated ? "/app/projects/new" : "/login";
   const scanState = isAuthenticated ? undefined : { from: { pathname: "/app/projects/new" } };
-  const primaryActionLabel = isAuthenticated ? "Tạo project" : "Dùng thử GreenShield";
+  const primaryActionLabel = isAuthenticated ? "Tạo project" : "Tạo tài khoản";
 
   function isActiveRoute(to) {
     if (to === "/") return location.pathname === "/";
@@ -80,7 +80,7 @@ export function Header() {
               </Button>
             </>
           ) : (
-            <Button data-testid="header-login-link" to="/login" variant="ghost">Đăng nhập</Button>
+            <Button data-testid="header-login-link" to="/login?mode=login" variant="ghost">Đăng nhập</Button>
           )}
         </div>
 
@@ -127,7 +127,7 @@ export function Header() {
                 </Button>
               </>
             ) : (
-              <Button className="w-full" onClick={() => setMenuOpen(false)} to="/login" variant="ghost">
+              <Button className="w-full" onClick={() => setMenuOpen(false)} to="/login?mode=login" variant="ghost">
                 Đăng nhập
               </Button>
             )}

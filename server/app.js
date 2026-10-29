@@ -13,6 +13,10 @@ import { createScanService, httpError } from "./services/scan-service.js";
 import { createEvaluator } from "./evaluator/service.js";
 import { sendVerificationOtp } from "./services/email-service.js";
 import { createPayments } from "./payments/service.js";
+import { createCredits } from "./payments/credits.js";
+import { createWorkQueue } from './services/work-queue.js';
+import { workspaceRoutes } from './workspaces.js';
+import { transactionLock } from './db/locks.js';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const now = () => new Date().toISOString();
@@ -22,16 +26,19 @@ export async function createApp(options = {}) {
   const db = options.db || (await createDatabase(options.databasePath, options.databaseUrl));
   const app = express();
   const origin = options.origin || process.env.APP_ORIGIN || `http://127.0.0.1:${process.env.PORT || 3000}`;
-  const scans = createScanService({ db, origin });
+  const credits = createCredits(db, { required: options.entitlementsRequired ?? (process.env.NODE_ENV === 'production' || process.env.SUBSCRIPTIONS_REQUIRED === 'true') });
+  const workQueue = createWorkQueue();
+  const scans = createScanService({ db, origin, credits, workQueue });
   await scans.recoverInterrupted();
   const requireAuth = authenticate(db);
   const readAuth = optionalAuthenticate(db);
-  const evaluator = createEvaluator({ db, requireAuth });
+  const evaluator = createEvaluator({ db, requireAuth, credits, workQueue });
   await evaluator.recover();
 
   app.disable("x-powered-by");
   app.set("trust proxy", 1);
   app.use(express.json({ limit: "200kb" }));
+  app.use('/api', (_request, response, next) => { response.set('Cache-Control', 'no-store'); next(); });
 
   app.use((request, response, next) => {
     if (app.locals.shuttingDown && request.method !== "GET" && !request.path.startsWith("/api/demo-target/")) {
@@ -40,7 +47,8 @@ export async function createApp(options = {}) {
     next();
   });
   app.use('/api/evaluations', evaluator.router);
-  app.use('/api/payments', createPayments({ db, requireAuth, env: options.paymentEnv || process.env, client: options.payosClient }));
+  app.use('/api/payments', createPayments({ db, requireAuth, credits, env: options.paymentEnv || process.env, client: options.payosClient }));
+  app.use('/api/workspaces', workspaceRoutes({ db, requireAuth, credits, getUserContext }));
   app.get("/api/health", async (_request, response) => {
     await db.prepare("SELECT 1 AS healthy").get();
     response.json({ ok: true, service: "greenshield" });
@@ -184,9 +192,13 @@ export async function createApp(options = {}) {
     try {
       const name = String(request.body?.name || "").trim();
       if (!name) throw httpError(400, "Tên project là bắt buộc.");
+      const targetType = request.body?.targetType || 'HTTP_CHATBOT';
+      if (!['DEMO', 'HTTP_CHATBOT', 'RAG_ENDPOINT', 'AI_AGENT'].includes(targetType)) throw httpError(400, 'Loại ứng dụng không hợp lệ.');
       const projectId = id("project");
       const createdAt = now();
-      await db
+      await db.transaction(async () => {
+        if (targetType !== 'DEMO') await credits.checkProject(request.auth.workspace.id);
+        await db
         .prepare(
           `INSERT INTO projects (id, workspace_id, name, description, target_type, environment, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -196,12 +208,13 @@ export async function createApp(options = {}) {
           request.auth.workspace.id,
           name,
           String(request.body?.description || "").trim(),
-          request.body?.targetType || "DEMO",
-          request.body?.environment || "DEMO",
+          targetType,
+          request.body?.environment || 'STAGING',
           createdAt,
           createdAt,
         );
       await addAudit(db, request.auth, "PROJECT_CREATED", "project", projectId);
+      })();
       response.status(201).json({ project: await getProject(db, projectId, request.auth.workspace.id) });
     } catch (error) {
       next(error);
@@ -253,11 +266,19 @@ export async function createApp(options = {}) {
     try {
       const project = await getProject(db, request.params.projectId, request.auth.workspace.id);
       if (!project) throw httpError(404, "Không tìm thấy project.");
-      const targetType = request.body?.type || "DEMO";
+      const targetType = request.body?.type || project.target_type;
+      if (targetType !== project.target_type) throw httpError(400, 'Loại endpoint phải khớp với ứng dụng.');
+      if (targetType !== 'DEMO' && request.body?.authorized !== true) throw httpError(400, 'Cần xác nhận quyền kiểm thử ứng dụng.');
       const targetId = id("target");
       const createdAt = now();
       const baseUrl = targetType === "DEMO" ? "demo://included" : String(request.body?.baseUrl || "").trim();
       if (!baseUrl) throw httpError(400, "Target URL là bắt buộc.");
+      await db.transaction(async () => {
+      if (targetType !== 'DEMO') {
+        await transactionLock(db, `targets:${project.id}`);
+        const existing = await db.prepare("SELECT id FROM targets WHERE project_id=? AND type<>'DEMO'").get(project.id);
+        if (existing) throw httpError(409, 'Mỗi ứng dụng có một endpoint đang hoạt động. Tạo project riêng cho ứng dụng khác.');
+      }
       await db
         .prepare(
           `INSERT INTO targets (id, project_id, name, type, base_url, method, headers_json,
@@ -282,6 +303,7 @@ export async function createApp(options = {}) {
           createdAt,
         );
       await addAudit(db, request.auth, "TARGET_CREATED", "target", targetId, { projectId: project.id, type: targetType });
+      })();
       response.status(201).json({ target: sanitizeTarget(await db.prepare("SELECT * FROM targets WHERE id=?").get(targetId)) });
     } catch (error) {
       next(error);

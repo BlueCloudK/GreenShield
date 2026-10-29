@@ -138,7 +138,8 @@ async function resolveSession(db, request) {
 }
 export async function getUserContext(db, userId) {
   const row = await db.prepare(`SELECT u.id,u.name,u.email,u.company,u.email_verified_at,w.id AS workspace_id,w.name AS workspace_name,wm.role
-    FROM users u JOIN workspace_members wm ON wm.user_id=u.id JOIN workspaces w ON w.id=wm.workspace_id WHERE u.id=? LIMIT 1`).get(userId);
+    FROM users u JOIN workspace_members wm ON wm.user_id=u.id JOIN workspaces w ON w.id=wm.workspace_id
+    WHERE u.id=? ORDER BY CASE WHEN w.id=u.active_workspace_id THEN 0 ELSE 1 END,wm.created_at,w.id LIMIT 1`).get(userId);
   return row ? { id: row.id, name: row.name, email: row.email, company: row.company, emailVerified: Boolean(row.email_verified_at), workspace: { id: row.workspace_id, name: row.workspace_name, role: row.role } } : null;
 }
 export async function destroySession(db, sessionId) {

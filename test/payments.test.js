@@ -9,12 +9,12 @@ import { createPayOS } from '../server/payments/payos.js';
 import { paymentConfig } from '../server/payments/service.js';
 
 const env = {
-  NODE_ENV: 'test', PAYOS_ENABLED: 'true', PAYOS_ASSESSMENT_AMOUNT_VND: '2000',
+  NODE_ENV: 'test', PAYOS_ENABLED: 'true',
   PAYOS_PUBLIC_ORIGIN: 'http://127.0.0.1:5174', PAYOS_CLIENT_ID: 'test-client',
   PAYOS_API_KEY: 'test-api-key', PAYOS_CHECKSUM_KEY: 'a'.repeat(64),
 };
 
-async function setup(t, { disabled = false, timeout = false } = {}) {
+async function setup(t, { disabled = false, timeout = false, paymentEnv = {} } = {}) {
   const db = await createDatabase(process.env.TEST_DATABASE_URL ? undefined : ':memory:', process.env.TEST_DATABASE_URL);
   const accounts = [];
   const states = new Map();
@@ -25,7 +25,7 @@ async function setup(t, { disabled = false, timeout = false } = {}) {
     paymentRequests: {
       async create(input) {
         creates++;
-        assert.equal(input.amount, 2000);
+        assert.ok([149000, 599000].includes(input.amount));
         assert.ok(input.returnUrl.startsWith(env.PAYOS_PUBLIC_ORIGIN + '/app/billing?order='));
         const state = { id: `link-${input.orderCode}`, orderCode: input.orderCode, amount: input.amount, amountPaid: 0, status: 'PENDING' };
         states.set(input.orderCode, state);
@@ -37,7 +37,7 @@ async function setup(t, { disabled = false, timeout = false } = {}) {
       async cancel(code) { if (states.get(code).status !== 'PAID') states.get(code).status = 'CANCELLED'; },
     },
   };
-  const app = await createApp({ db, serveStatic: false, paymentEnv: disabled ? {} : env, payosClient: fake });
+  const app = await createApp({ db, serveStatic: false, paymentEnv: disabled ? {} : { ...env, ...paymentEnv }, payosClient: fake });
   const server = app.listen(0, '127.0.0.1');
   await once(server, 'listening');
   t.after(async () => {
@@ -68,9 +68,9 @@ async function setup(t, { disabled = false, timeout = false } = {}) {
     assert.equal((await call('/api/auth/login', { email, password: 'payment-test-only-password' })).status, 200);
     return user;
   }
-  const create = key => call('/api/payments/orders', { productId: 'assessment' }, { 'Idempotency-Key': key });
+  const create = key => call('/api/payments/orders', { productId: 'builder_pro' }, { 'Idempotency-Key': key });
   async function webhook(order, overrides = {}) {
-    const data = { code: '00', orderCode: order.order_code, paymentLinkId: order.payment_link_id || `link-${order.order_code}`, amount: 2000, currency: 'VND', ...overrides };
+    const data = { code: '00', orderCode: order.order_code, paymentLinkId: order.payment_link_id || `link-${order.order_code}`, amount: order.amount, currency: 'VND', ...overrides };
     return call('/api/payments/webhook', { code: '00', success: true, data, signature: await sdk.crypto.createSignatureFromObj(data, env.PAYOS_CHECKSUM_KEY) });
   }
   return { db, states, call, login, create, webhook, creates: () => creates };
@@ -102,8 +102,8 @@ test('disabled mode, authentication, verified email, role and server pricing gat
   await g.db.prepare("UPDATE workspace_members SET role='MEMBER' WHERE user_id=?").run(user.id);
   assert.equal((await g.create('member-request-key')).status, 403);
   await g.db.prepare("UPDATE workspace_members SET role='OWNER' WHERE user_id=?").run(user.id);
-  assert.equal((await g.call('/api/payments/orders', { productId: 'assessment', amount: 1 }, { 'Idempotency-Key': 'client-price-request-key' })).status, 400);
-  assert.equal((await g.call('/api/payments/orders', { productId: 'assessment' }, { origin: 'https://evil.example', 'Idempotency-Key': 'cross-origin-request-key' })).status, 403);
+  assert.equal((await g.call('/api/payments/orders', { productId: 'builder_pro', amount: 1 }, { 'Idempotency-Key': 'client-price-request-key' })).status, 400);
+  assert.equal((await g.call('/api/payments/orders', { productId: 'builder_pro' }, { origin: 'https://evil.example', 'Idempotency-Key': 'cross-origin-request-key' })).status, 403);
 });
 
 test('idempotent checkout, verified webhook, amount validation and workspace isolation', async t => {
@@ -113,20 +113,25 @@ test('idempotent checkout, verified webhook, amount validation and workspace iso
   assert.equal(a.body.order.id, b.body.order.id);
   assert.equal(f.creates(), 1);
   const order = a.body.order.status === 'PENDING' ? a.body.order : b.body.order;
-  assert.equal(order.amount, 2000);
+  assert.equal(order.amount, 149000);
   assert.equal((await f.create('another-checkout-key')).body.order.id, order.id);
   assert.equal((await f.call('/api/payments/webhook', { success: true, data: { orderCode: order.order_code }, signature: 'invalid' })).status, 400);
   assert.equal((await f.webhook(order, { amount: 1999 })).status, 409);
   assert.equal((await f.webhook(order, { paymentLinkId: 'wrong-link' })).status, 409);
   assert.equal((await f.call(`/api/payments/orders/${order.id}?status=PAID&cancel=false`)).body.order.status, 'PENDING');
   assert.equal((await f.call(`/api/payments/orders/${order.id}/refresh`, {})).body.order.status, 'PENDING');
+  assert.equal((await f.call('/api/payments/config')).body.usage.active, null);
   f.states.get(order.order_code).status = 'PAID';
   f.states.get(order.order_code).amountPaid = 1000;
   assert.equal((await f.webhook(order)).status, 409);
-  f.states.get(order.order_code).amountPaid = 2000;
+  f.states.get(order.order_code).amountPaid = 149000;
   const repeated = await Promise.all([f.webhook(order), f.webhook(order), f.webhook(order)]);
   assert.ok(repeated.every(result => result.status === 200));
   assert.equal(Number((await f.db.prepare('SELECT COUNT(*) AS n FROM payment_receipts WHERE order_id=?').get(order.id)).n), 1);
+  const paidConfig = (await f.call('/api/payments/config')).body;
+  assert.equal(paidConfig.usage.periods.length, 1);
+  assert.equal(paidConfig.usage.testsRemaining, 300);
+  assert.equal(paidConfig.usage.active.plan_key, 'builder_pro');
   f.states.get(order.order_code).status = 'CANCELLED';
   assert.equal((await f.call(`/api/payments/orders/${order.id}/refresh`, {})).body.order.status, 'PAID');
   await f.login('outsider@example.com');
@@ -134,6 +139,19 @@ test('idempotent checkout, verified webhook, amount validation and workspace iso
     assert.equal((await f.call(path, path.endsWith(order.id) ? undefined : {})).status, 404);
   }
   assert.equal((await f.call('/api/payments/orders')).body.orders.length, 0);
+  assert.equal((await f.call('/api/payments/config')).body.usage.active, null);
+});
+
+test('catalog uses approved server plans and contact-only packages cannot create links', async t => {
+    const f = await setup(t);
+    const catalog = await f.call('/api/payments/catalog');
+    assert.equal(catalog.status, 200);
+    assert.deepEqual(catalog.body.plans.map(plan => plan.id), ['builder_pro', 'team', 'custom']);
+    assert.equal(catalog.body.plans[1].amount, 599000);
+    assert.ok(!JSON.stringify(catalog.body).includes('test-api-key'));
+    await f.login('not-ready@example.com');
+    assert.equal((await f.call('/api/payments/orders', { productId: 'custom' }, { 'Idempotency-Key': 'contact-only-request' })).status, 400);
+    assert.equal(f.creates(), 0);
 });
 
 test('ambiguous create timeout is recoverable without creating a duplicate charge', async t => {
@@ -146,7 +164,7 @@ test('ambiguous create timeout is recoverable without creating a duplicate charg
   assert.equal(order.status, 'UNKNOWN');
   assert.equal(f.creates(), 1);
   f.states.get(order.order_code).status = 'PAID';
-  f.states.get(order.order_code).amountPaid = 2000;
+  f.states.get(order.order_code).amountPaid = 149000;
   assert.equal((await f.call(`/api/payments/orders/${order.id}/refresh`, {})).body.order.status, 'PAID');
   assert.equal(Number((await f.db.prepare('SELECT COUNT(*) AS n FROM payment_receipts WHERE order_id=?').get(order.id)).n), 1);
 });
@@ -157,4 +175,26 @@ test('pending order cancellation is verified with PayOS rather than a redirect',
   const order = (await f.create('cancel-checkout-request-key')).body.order;
   assert.equal((await f.call(`/api/payments/orders/${order.id}/cancel`, {})).body.order.status, 'CANCELLED');
   assert.equal(Number((await f.db.prepare('SELECT COUNT(*) AS n FROM payment_receipts WHERE order_id=?').get(order.id)).n), 0);
+});
+
+test('Team uses its approved price and renewals create non-overlapping monthly periods', async t => {
+  const f = await setup(t);
+  await f.login('team-owner@example.com');
+  const result = await f.call('/api/payments/orders', { productId: 'team' }, { 'Idempotency-Key': 'team-checkout-request' });
+  assert.equal(result.status, 201);
+  const order = result.body.order;
+  assert.equal(order.amount, 599000);
+  assert.equal(order.test_allowance, 1500);
+  assert.equal((await f.create('team-checkout-request')).status, 409);
+  assert.equal((await f.create('different-plan-key')).status, 409);
+  f.states.get(order.order_code).status = 'PAID'; f.states.get(order.order_code).amountPaid = 599000;
+  assert.equal((await f.webhook(order)).status, 200);
+  const renewal = (await f.create('next-builder-period-key')).body.order;
+  f.states.get(renewal.order_code).status = 'PAID'; f.states.get(renewal.order_code).amountPaid = 149000;
+  assert.equal((await f.webhook(renewal)).status, 200);
+  const state = (await f.call('/api/payments/config')).body.usage;
+  assert.equal(state.active.plan_key, 'team');
+  assert.equal(state.active.project_allowance, 5);
+  assert.equal(state.next.plan_key, 'builder_pro');
+  assert.equal(state.next.starts_at, state.active.ends_at);
 });

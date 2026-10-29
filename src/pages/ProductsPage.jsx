@@ -2,11 +2,12 @@ import { CheckCircle2 } from "lucide-react";
 import { PricingComparison } from "../components/pricing/PricingComparison";
 import { Button } from "../components/ui/Button";
 import { SectionHeader } from "../components/ui/SectionHeader";
-import { pricingPlans } from "../data/scans";
+import { usePricingPlans } from '../hooks/usePricingPlans';
 
-const planBadges = ["Cơ bản", "Phổ biến", "Nâng cao", "Doanh nghiệp"];
+const planBadges = ['Cá nhân', 'Đội nhóm', 'Tùy chỉnh'];
 
 export default function ProductsPage() {
+  const pricingPlans = usePricingPlans();
   return (
     <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
       <div className="flex min-w-0 flex-col justify-between gap-5 lg:flex-row lg:items-end">
@@ -18,17 +19,17 @@ export default function ProductsPage() {
         <Button className="w-full sm:w-fit" data-testid="pricing-request-assessment" to="/contact">Yêu cầu assessment</Button>
       </div>
 
-      <div className="mt-10 grid grid-cols-1 items-stretch gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-10 grid grid-cols-1 items-stretch gap-5 lg:grid-cols-3">
         {pricingPlans.map((plan) => (
           <article
-            className={`glass-panel flex min-w-0 flex-col rounded-2xl p-5 ${plan.name === "AI App Assessment" ? "border-emerald-300/40" : ""}`}
+            className={`flex min-w-0 flex-col rounded-lg border border-white/10 p-5 ${plan.id === 'team' ? 'border-emerald-300/40' : ''}`}
             key={plan.name}
           >
             <div className="flex min-h-[4.25rem] min-w-0 items-start justify-between gap-3">
               <p className="min-w-0 text-sm font-bold leading-5 text-emerald-300">{plan.targetUser}</p>
               <span
                 className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-black ${
-                  plan.name === "AI App Assessment"
+                  plan.id === 'team'
                     ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-100"
                     : "border-white/10 bg-white/[0.05] text-slate-300"
                 }`}
@@ -43,12 +44,12 @@ export default function ProductsPage() {
             </div>
             <div className="mt-5 grid gap-2 text-xs sm:grid-cols-2">
               <div className="rounded-xl border border-white/10 bg-slate-950/45 p-3">
-                <p className="text-slate-500">Scans</p>
-                <p className="mt-1 font-bold text-slate-200">{plan.scanQuota}</p>
+                <p className="text-slate-500">Ứng dụng AI</p>
+                <p className="mt-1 font-bold text-slate-200">{plan.applicationLimit}</p>
               </div>
               <div className="rounded-xl border border-white/10 bg-slate-950/45 p-3">
-                <p className="text-slate-500">Retest</p>
-                <p className="mt-1 font-bold text-slate-200">{plan.retestCount}</p>
+                <p className="text-slate-500">Bài kiểm thử</p>
+                <p className="mt-1 font-bold text-slate-200">{plan.testQuota}</p>
               </div>
             </div>
             <ul className="mt-5 min-h-[8.5rem] space-y-3 text-sm text-slate-300">
@@ -67,7 +68,7 @@ export default function ProductsPage() {
                 <span className="font-bold text-white">Review thủ công:</span> {plan.manualReview}
               </p>
             </div>
-            <Button className="mt-4 w-full" data-testid={`pricing-plan-${pricingPlans.indexOf(plan) + 1}`} to={plan.name === "Product Preview" ? "/login" : "/contact"} variant={plan.name === "Product Preview" ? "primary" : "secondary"}>
+            <Button className="mt-4 w-full" data-testid={`pricing-plan-${pricingPlans.indexOf(plan) + 1}`} to={plan.id === 'custom' ? '/contact' : `/app/billing?plan=${plan.id}`} variant={plan.id === 'team' ? 'primary' : 'secondary'}>
               {plan.ctaLabel}
             </Button>
           </article>

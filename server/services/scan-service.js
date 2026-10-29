@@ -2,14 +2,16 @@ import crypto from "node:crypto";
 import { calculateRisk } from "../security/scoring.js";
 import { getSecurityTest, securityTests } from "../security/test-registry.js";
 import { sendTargetRequest } from "../security/target-client.js";
+import { transactionLock } from '../db/locks.js';
+import { createWorkQueue } from './work-queue.js';
 
 const now = () => new Date().toISOString();
 const id = (prefix) => `${prefix}_${crypto.randomUUID()}`;
 
-export function createScanService({ db, origin }) {
+export function createScanService({ db, origin, credits, workQueue = createWorkQueue() }) {
   const jobs = new Set();
-  function schedule(callback) {
-    const job = new Promise((resolve) => setImmediate(resolve)).then(callback);
+  function schedule(callback, priority = 0) {
+    const job = workQueue.enqueue(callback, priority);
     jobs.add(job);
     job
       .catch((error) => console.error(JSON.stringify({ level: "error", message: "Scan worker failed", code: error.code })))
@@ -30,6 +32,8 @@ export function createScanService({ db, origin }) {
         .prepare("UPDATE retests SET status='ERROR', new_evidence=?, completed_at=? WHERE status='RETESTING'")
         .run("Server restarted before retest completed. Please retry.", timestamp);
       await db.prepare("UPDATE findings SET retest_status='ERROR', updated_at=? WHERE retest_status='RETESTING'").run(timestamp);
+      await db.prepare(`UPDATE package_usage SET refunded_at=? WHERE refunded_at IS NULL AND
+        (resource_id IN (SELECT id FROM scans WHERE status='FAILED') OR resource_id IN (SELECT id FROM retests WHERE status='ERROR'))`).run(timestamp);
     })();
   }
   async function createScan({ projectId, targetId, testIds, name, workspaceId, actorUserId }) {
@@ -45,6 +49,7 @@ export function createScanService({ db, origin }) {
     const scanId = id("scan");
     const createdAt = now();
     await db.transaction(async () => {
+      if (target.type !== 'DEMO') await credits?.consume(workspaceId, 'scan', scanId, selected.length);
       await db
         .prepare(
           `INSERT INTO scans (id, project_id, target_id, name, status, total_tests, created_at)
@@ -61,7 +66,8 @@ export function createScanService({ db, origin }) {
       }
       await audit(workspaceId, actorUserId, "SCAN_STARTED", "scan", scanId, { projectId, targetId });
     })();
-    schedule(() => executeScan(scanId).catch((error) => failScan(scanId, error)));
+    const priority = (await credits?.summary(workspaceId))?.active?.processing_priority || 0;
+    schedule(() => executeScan(scanId).catch((error) => failScan(scanId, error)), priority);
     return getScan(scanId, workspaceId);
   }
 
@@ -194,6 +200,10 @@ export function createScanService({ db, origin }) {
     const executionId = id("exec");
     const createdAt = now();
     await db.transaction(async () => {
+      await transactionLock(db, `retest:${findingId}`);
+      const current = await db.prepare('SELECT retest_status FROM findings WHERE id=?').get(findingId);
+      if (current.retest_status === 'RETESTING') throw httpError(409, 'Finding này đang được retest.');
+      if (target.type !== 'DEMO') await credits?.consume(workspaceId, 'retest', retestId);
       await db
         .prepare(
           `INSERT INTO test_executions (id, scan_id, security_test_id, test_version, status, created_at)
@@ -219,6 +229,7 @@ export function createScanService({ db, origin }) {
       await db.prepare("UPDATE findings SET retest_status='RETESTING', updated_at=? WHERE id=?").run(createdAt, findingId);
       await audit(workspaceId, actorUserId, "FINDING_RETEST_STARTED", "finding", findingId, { retestId });
     })();
+    const priority = (await credits?.summary(workspaceId))?.active?.processing_priority || 0;
     schedule(async () => {
       const outcome = await executeRetest({ finding, target, test, executionId });
       const fixed = outcome.status === "PASSED";
@@ -235,8 +246,9 @@ export function createScanService({ db, origin }) {
           .prepare(`UPDATE findings SET status=?, retest_status=?, updated_at=? WHERE id=?`)
           .run(fixed ? "FIXED" : "OPEN", fixed ? "FIXED" : outcome.status === "ERROR" ? "ERROR" : "STILL_VULNERABLE", now(), findingId);
         await audit(workspaceId, actorUserId, "FINDING_RETEST_COMPLETED", "finding", findingId, { fixed, retestId });
+        if (outcome.status === 'ERROR') await credits?.refund(retestId);
       })();
-    });
+    }, priority);
     return { id: retestId, status: "RETESTING" };
   }
 
@@ -301,6 +313,7 @@ export function createScanService({ db, origin }) {
   }
 
   async function failScan(scanId, error) {
+    await credits?.refund(scanId);
     await db.prepare("UPDATE scans SET status='FAILED', error_message=?, completed_at=? WHERE id=?").run(error.message, now(), scanId);
   }
 

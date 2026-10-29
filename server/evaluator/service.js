@@ -3,6 +3,7 @@ import { Router } from "express";
 import { probes, suite } from "./dataset.js";
 import { check, summarize } from "./scoring.js";
 import { callEndpoint, redact, requestBody, resolveEndpoint } from "./client.js";
+import { createWorkQueue } from '../services/work-queue.js';
 
 function invalid(message) {
   return Object.assign(new Error(message), { status: 400 });
@@ -87,7 +88,7 @@ function fixture(test) {
   return test.expected;
 }
 
-export function createEvaluator({ db, requireAuth, transport = callEndpoint }) {
+export function createEvaluator({ db, requireAuth, credits, transport = callEndpoint, workQueue = createWorkQueue() }) {
   const jobs = new Map();
   const router = Router();
   router.use(requireAuth);
@@ -160,7 +161,7 @@ export function createEvaluator({ db, requireAuth, transport = callEndpoint }) {
         "SELECT id,name,status,progress,total,created_at FROM endpoint_evaluations WHERE workspace_id=? ORDER BY created_at DESC LIMIT 30",
       )
       .all(request.auth.workspace.id);
-    response.json({ evaluations: rows });
+    response.json({ evaluations: rows, suites: [10, 20, 30].map(value => ({ value, tests: probes.length + suite(value, false).length })) });
   });
   router.get("/:id", async (request, response) => response.json({ evaluation: present(await own(request)) }));
   router.post("/:id/cancel", async (request, response) => {
@@ -173,9 +174,18 @@ export function createEvaluator({ db, requireAuth, transport = callEndpoint }) {
   });
   router.post("/", async (request, response) => {
     const workspace = request.auth.workspace.id;
-    if (jobs.size >= 2 || [...jobs.values()].some((job) => job.workspace === workspace))
+    if (jobs.size >= 20 || [...jobs.values()].some((job) => job.workspace === workspace))
       throw Object.assign(new Error("Đang có benchmark chạy. Vui lòng đợi hoặc dừng phiên hiện tại."), { status: 429 });
     const config = validateConfig(request.body);
+    let projectId = null;
+    if (!config.demo && credits?.required) {
+      const project = await db.prepare(`SELECT p.id,t.base_url FROM projects p JOIN targets t ON t.project_id=p.id
+        WHERE p.id=? AND p.workspace_id=? AND p.archived_at IS NULL AND t.type<>'DEMO'`).get(String(request.body?.projectId || ''), workspace);
+      try {
+        if (!project || new URL(project.base_url).href !== new URL(config.url).href) throw new Error();
+      } catch { throw invalid('Chọn ứng dụng đã kết nối và đúng endpoint của ứng dụng đó.'); }
+      projectId = project.id;
+    }
     // Reserve a slot before any asynchronous validation to prevent concurrent starts.
     const id = crypto.randomUUID();
     const controller = new AbortController();
@@ -184,11 +194,16 @@ export function createEvaluator({ db, requireAuth, transport = callEndpoint }) {
     try {
       if (!config.demo) await resolveEndpoint(config.url);
       const tests = [...probes, ...suite(config.suite, config.conversation === "messages")];
-      await db
-        .prepare("INSERT INTO endpoint_evaluations (id,workspace_id,name,status,total,created_at) VALUES (?,?,?,?,?,?)")
-        .run(id, workspace, config.name, "QUEUED", tests.length, new Date().toISOString());
-      job.promise = (async () => {
-        const timer = setTimeout(() => controller.abort(new Error("Benchmark vượt thời gian tối đa.")), 90000);
+      await db.transaction(async () => {
+        if (!config.demo) await credits?.consume(workspace, 'scan', id, tests.length);
+        await db
+        .prepare("INSERT INTO endpoint_evaluations (id,workspace_id,name,status,total,created_at,project_id) VALUES (?,?,?,?,?,?,?)")
+        .run(id, workspace, config.name, "QUEUED", tests.length, new Date().toISOString(), projectId);
+      })();
+      const priority = (await credits?.summary(workspace))?.active?.processing_priority || 0;
+      job.promise = workQueue.enqueue(async () => {
+        let timedOut = false;
+        const timer = setTimeout(() => { timedOut = true; controller.abort(new Error('Benchmark vượt thời gian tối đa.')); }, 90000);
         try {
           await db.prepare("UPDATE endpoint_evaluations SET status='RUNNING' WHERE id=? AND status='QUEUED'").run(id);
           const results = [];
@@ -208,10 +223,13 @@ export function createEvaluator({ db, requireAuth, transport = callEndpoint }) {
             });
           }
           if (controller.signal.aborted) {
+            if (timedOut) throw new Error('Benchmark vượt thời gian tối đa.');
             await db
               .prepare("UPDATE endpoint_evaluations SET status='CANCELLED',error_message='Phiên đánh giá đã dừng.' WHERE id=?")
               .run(id);
+            await credits?.finalize(id, results.length);
           } else {
+            if (results.length && results.every(result => result.status === 'ERROR')) throw new Error('Endpoint unavailable');
             const report = summarize(config, results.slice(0, probes.length), results.slice(probes.length));
             report.id = id;
             await db
@@ -222,11 +240,12 @@ export function createEvaluator({ db, requireAuth, transport = callEndpoint }) {
           await db
             .prepare("UPDATE endpoint_evaluations SET status='FAILED',error_message='Không thể hoàn tất benchmark.' WHERE id=?")
             .run(id);
+          await credits?.refund(id);
         } finally {
           clearTimeout(timer);
           jobs.delete(id);
         }
-      })();
+      }, priority);
       response.status(202).json({ id });
     } catch (error) {
       jobs.delete(id);
@@ -236,11 +255,14 @@ export function createEvaluator({ db, requireAuth, transport = callEndpoint }) {
   return {
     router,
     drain: () => Promise.allSettled([...jobs.values()].map((job) => job.promise)),
-    recover: () =>
-      db
+    recover: async () => {
+      await db
         .prepare(
           "UPDATE endpoint_evaluations SET status='FAILED',error_message='Server khởi động lại; hãy chạy phiên mới.' WHERE status IN ('QUEUED','RUNNING')",
         )
-        .run(),
+        .run();
+      await db.prepare(`UPDATE package_usage SET refunded_at=? WHERE refunded_at IS NULL
+        AND resource_id IN (SELECT id FROM endpoint_evaluations WHERE status='FAILED')`).run(new Date().toISOString());
+    },
   };
 }

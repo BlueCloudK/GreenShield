@@ -1,34 +1,36 @@
 import { CheckCircle2, Minus } from "lucide-react";
 
 const rows = [
-  { label: "Số lượt scan", key: "scanQuota", type: "text" },
+  { label: 'Ứng dụng AI đang hoạt động', key: 'applicationLimit', type: 'text' },
+  { label: 'Bài kiểm thử tự động', key: 'testQuota', type: 'text' },
   { label: "Mức báo cáo", key: "reportLevel", type: "text" },
-  { label: "Lượt retest", key: "retestCount", type: "text" },
+  { label: 'Workspace dùng chung', key: 'shared', type: 'text' },
+  { label: 'Xử lý phiên đang chờ', key: 'priority', type: 'text' },
   { label: "Đánh giá thủ công", key: "manualReview", type: "text" },
   {
     label: "Kiểm tra Prompt Injection",
     type: "feature",
-    values: ["included", "included", "included", "included"],
+    values: ['included', 'included', 'included'],
   },
   {
     label: "Đánh giá RAG Leakage",
     type: "feature",
-    values: ["preview", "included", "included", "included"],
+    values: ['included', 'included', 'included'],
   },
   {
     label: "Review lạm dụng agent/tool",
     type: "feature",
-    values: ["none", "none", "included", "included"],
+    values: ['none', 'none', 'included'],
   },
   {
     label: "Xuất báo cáo có bằng chứng",
     type: "feature",
-    values: ["none", "none", "included", "included"],
+    values: ['included', 'included', 'included'],
   },
   {
     label: "Retest sau khi sửa",
     type: "feature",
-    values: ["none", "included", "included", "included"],
+    values: ['included', 'included', 'included'],
   },
 ];
 
@@ -82,7 +84,7 @@ export function PricingComparison({ plans }) {
                 {plans.map((plan) => (
                   <td className="px-5 py-3 text-slate-400" key={`${plan.name}-${row.label}`}>
                     {row.type === "feature" ? (
-                      <FeatureValue value={row.values[plans.indexOf(plan)]} />
+                      plan.id === 'custom' ? 'Theo phạm vi' : <FeatureValue value={row.values[plans.indexOf(plan)]} />
                     ) : (
                       plan[row.key]
                     )}

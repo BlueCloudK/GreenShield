@@ -5,6 +5,7 @@ import { ErrorState, LoadingState } from "../components/ui/PageState";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { useApiResource } from "../hooks/useApiResource";
 import { post } from "../lib/api";
+import { UsageBanner } from '../components/payments/UsageBanner';
 
 export default function NewProjectScanPage() {
   const { projectId } = useParams();
@@ -39,6 +40,7 @@ export default function NewProjectScanPage() {
     <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <p className="section-kicker">Security scan</p><h1 className="mt-2 text-3xl font-black text-white">Chọn test cho {project.name}</h1>
       <p className="mt-2 text-sm text-slate-400">Mỗi test bên dưới gửi một payload thật tới target và đánh giá response bằng rule deterministic.</p>
+      <UsageBanner />
       <div className="mt-6 flex items-center justify-between rounded-lg border border-white/10 bg-[#0a1019] p-4"><div><p className="text-xs text-slate-500">Target</p><p className="mt-1 font-bold text-white">{target?.name || "Chưa có target đã kết nối"}</p></div><StatusBadge value={target?.last_connection_status || "NOT_TESTED"} /></div>
       <div className="mt-6 overflow-hidden rounded-lg border border-white/10">
         {tests.map((test) => {

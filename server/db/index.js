@@ -49,7 +49,7 @@ export async function runMigrations(db) {
       if (await applied.get(filename)) return;
       await db.exec(sql);
       if (db.dialect === 'postgres') {
-        for (const table of ['email_verifications', 'payment_orders', 'payment_receipts', 'endpoint_evaluations']) {
+        for (const table of ['email_verifications', 'payment_orders', 'payment_receipts', 'endpoint_evaluations', 'subscription_periods', 'package_usage']) {
           await db.exec(`DO $$ BEGIN IF to_regclass('greenshield.${table}') IS NOT NULL THEN
             ALTER TABLE greenshield.${table} ENABLE ROW LEVEL SECURITY;
             REVOKE ALL ON greenshield.${table} FROM PUBLIC;

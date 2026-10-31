@@ -4,6 +4,7 @@ import { ProductLayout } from "./components/layout/ProductLayout";
 import { LoadingState } from "./components/ui/PageState";
 import { useAuth } from "./context/AuthContext";
 import AboutPage from "./pages/AboutPage";
+import AdminPage from "./pages/AdminPage";
 import BillingPage from "./pages/BillingPage";
 import ContactPage from "./pages/ContactPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -43,6 +44,7 @@ export default function App() {
 
       <Route element={<ProtectedRoute><ProductLayout /></ProtectedRoute>} path="/app">
         <Route index element={<DashboardPage />} />
+        <Route element={<AdminPage />} path="admin" />
         <Route element={<EndpointEvaluatorPage />} path="evaluator" />
         <Route element={<BillingPage />} path="billing" />
         <Route element={<ProjectsPage />} path="projects" />
@@ -53,6 +55,7 @@ export default function App() {
         <Route element={<ReportPage />} path="reports/:scanId" />
       </Route>
 
+      <Route element={<Navigate replace to="/app/admin" />} path="/admin" />
       <Route element={<Navigate replace to="/app" />} path="/dashboard" />
       <Route element={<Navigate replace to="/app/projects/new" />} path="/scan/new" />
       <Route element={<Navigate replace to="/app" />} path="/scan/progress" />

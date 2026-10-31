@@ -3,6 +3,17 @@ import { api, post } from "../lib/api";
 
 const AuthContext = createContext(null);
 
+const ADMIN_EMAILS = new Set([
+  "admin@greenshieldai.tech",
+  "thanhkiennk@gmail.com",
+]);
+
+export function isAdminUser(user) {
+  if (!user) return false;
+  if (user.isAdmin) return true;
+  return ADMIN_EMAILS.has(String(user.email || "").trim().toLowerCase());
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -20,7 +31,7 @@ export function AuthProvider({ children }) {
     try {
       const result = await post("/api/auth/login", { email, password });
       setUser(result.user);
-      return { ok: true };
+      return { ok: true, user: result.user };
     } catch (error) {
       return { ok: false, message: error.message };
     }
@@ -68,6 +79,7 @@ export function AuthProvider({ children }) {
     user,
     loading,
     isAuthenticated: Boolean(user),
+    isAdmin: isAdminUser(user),
     login,
     register,
     sendOtp,

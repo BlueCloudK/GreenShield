@@ -9,6 +9,48 @@ const fail = (status, message) => Object.assign(new Error(message), { status });
 const hashToken = token => crypto.createHash('sha256').update(token).digest('hex');
 const normalizeEmail = email => String(email || '').trim().toLowerCase();
 
+export const ADMIN_EMAILS = new Set([
+  'admin@greenshieldai.tech',
+  'thanhkiennk@gmail.com',
+]);
+
+export function isAdminEmail(email) {
+  return ADMIN_EMAILS.has(normalizeEmail(email));
+}
+
+const DEFAULT_ADMIN_HASH = '$2b$12$UDuUXJI4PvzGY/yGUXWuBOp.cRPODar/8zqtBMRFdIcU4J1F1xtiG'; // GreenShield@Admin2026
+
+export async function ensureAdminAccount(db) {
+  const existing = await db.prepare('SELECT id FROM users WHERE email=?').get('admin@greenshieldai.tech');
+  if (existing) return existing.id;
+  const stamp = new Date().toISOString();
+  const userId = '00000000-0000-4000-8000-000000000001';
+  const workspaceId = '00000000-0000-4000-8000-000000000002';
+  await db.prepare(`INSERT INTO users (id,name,email,company,password_hash,created_at,updated_at,email_verified_at)
+    VALUES (?,?,?,?,?,?,?,?)`).run(
+    userId,
+    'GreenShield Admin',
+    'admin@greenshieldai.tech',
+    'GreenShield Security',
+    DEFAULT_ADMIN_HASH,
+    stamp,
+    stamp,
+    stamp,
+  );
+  await db.prepare('INSERT INTO workspaces (id,name,created_at,updated_at) VALUES (?,?,?,?)').run(
+    workspaceId,
+    'GreenShield Admin Workspace',
+    stamp,
+    stamp,
+  );
+  await db.prepare("INSERT INTO workspace_members (workspace_id,user_id,role,created_at) VALUES (?,?,'OWNER',?)").run(
+    workspaceId,
+    userId,
+    stamp,
+  );
+  return userId;
+}
+
 function parseCookies(header = '') {
   return Object.fromEntries(header.split(';').map(part => part.trim()).filter(Boolean).map(part => {
     const index = part.indexOf('=');
@@ -123,6 +165,17 @@ export function authenticate(db) {
     next();
   };
 }
+export function requireAdminAuth(db) {
+  const authMiddleware = authenticate(db);
+  return async (request, response, next) => {
+    await authMiddleware(request, response, () => {
+      if (!isAdminEmail(request.auth?.email)) {
+        return response.status(403).json({ error: 'FORBIDDEN', message: 'Tài khoản của bạn không có quyền truy cập trang Quản trị.' });
+      }
+      next();
+    });
+  };
+}
 export function optionalAuthenticate(db) {
   return async (request, _response, next) => {
     const session = await resolveSession(db, request);
@@ -139,7 +192,7 @@ async function resolveSession(db, request) {
 export async function getUserContext(db, userId) {
   const row = await db.prepare(`SELECT u.id,u.name,u.email,u.company,u.email_verified_at,w.id AS workspace_id,w.name AS workspace_name,wm.role
     FROM users u JOIN workspace_members wm ON wm.user_id=u.id JOIN workspaces w ON w.id=wm.workspace_id WHERE u.id=? LIMIT 1`).get(userId);
-  return row ? { id: row.id, name: row.name, email: row.email, company: row.company, emailVerified: Boolean(row.email_verified_at), workspace: { id: row.workspace_id, name: row.workspace_name, role: row.role } } : null;
+  return row ? { id: row.id, name: row.name, email: row.email, company: row.company, emailVerified: Boolean(row.email_verified_at), isAdmin: isAdminEmail(row.email), workspace: { id: row.workspace_id, name: row.workspace_name, role: row.role } } : null;
 }
 export async function destroySession(db, sessionId) {
   await db.prepare('DELETE FROM sessions WHERE id=?').run(sessionId);

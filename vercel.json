@@ -4,6 +4,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/api/admin/:path*",
+      "destination": "https://ymyggxbprudvaddxyari.supabase.co/functions/v1/greenshield-admin/:path*"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://greenshield.47.128.150.181.sslip.io/api/:path*"
     },

@@ -17,7 +17,7 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, isAdmin, user, logout } = useAuth();
   const scanRoute = isAuthenticated ? "/app/projects/new" : "/login";
   const scanState = isAuthenticated ? undefined : { from: { pathname: "/app/projects/new" } };
   const primaryActionLabel = isAuthenticated ? "Tạo project" : "Dùng thử GreenShield";
@@ -73,6 +73,11 @@ export function Header() {
           </Button>
           {user ? (
             <>
+              {isAdmin ? (
+                <Button data-testid="header-admin-link" to="/app/admin" variant="secondary">
+                  Quản trị
+                </Button>
+              ) : null}
               <Button data-testid="header-dashboard-link" to="/app" variant="secondary">
                 Dashboard
               </Button>
@@ -120,6 +125,11 @@ export function Header() {
             </Button>
             {user ? (
               <>
+                {isAdmin ? (
+                  <Button className="w-full" onClick={() => setMenuOpen(false)} to="/app/admin" variant="secondary">
+                    Quản trị
+                  </Button>
+                ) : null}
                 <Button className="w-full" onClick={() => setMenuOpen(false)} to="/app" variant="secondary">
                   Dashboard
                 </Button>

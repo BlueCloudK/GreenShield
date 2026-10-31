@@ -148,3 +148,7 @@ The [OC1 GreenShield dossier](docs/OC1_GREENSHIELD.md) maps the product to tasks
 
 - Featured product reviews appear on the Home page (`/`) and Pricing page (`/products`).
 - The dedicated `/reviews` page provides overall rating breakdown, filtering by service plan and star rating, sorting (`Mới nhất`, `Hữu ích nhất`, `Số sao cao nhất`), and an interactive review submission form persisted in browser `localStorage` for demo sessions.
+
+## Admin console (`/app/admin` or `/admin`)
+
+- System administrators (`admin@greenshieldai.tech`) can access `/app/admin` to view system-wide KPIs, manage user accounts (verify email, create verified accounts without OTP, delete test accounts), review contact/assessment requests, inspect PayOS payment orders and security scans across workspaces, and moderate product reviews.

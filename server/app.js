@@ -3,7 +3,7 @@ import express from "express";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { authenticate, clearSessionCookie, createEmailOtp, destroySession, loginUser, optionalAuthenticate, registerUser, setSessionCookie, verifyEmailOtp, getUserContext } from "./auth.js";
+import { authenticate, clearSessionCookie, createEmailOtp, destroySession, ensureAdminAccount, loginUser, optionalAuthenticate, registerUser, setSessionCookie, verifyEmailOtp, getUserContext } from "./auth.js";
 import { createDatabase, json } from "./db/index.js";
 import { respondAsDemoTarget } from "./security/demo-target.js";
 import { encryptSecret } from "./security/secret-provider.js";
@@ -13,6 +13,7 @@ import { createScanService, httpError } from "./services/scan-service.js";
 import { createEvaluator } from "./evaluator/service.js";
 import { sendVerificationOtp } from "./services/email-service.js";
 import { createPayments } from "./payments/service.js";
+import { createAdminRouter } from "./services/admin-service.js";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const now = () => new Date().toISOString();
@@ -20,6 +21,7 @@ const id = (prefix) => `${prefix}_${crypto.randomUUID()}`;
 
 export async function createApp(options = {}) {
   const db = options.db || (await createDatabase(options.databasePath, options.databaseUrl));
+  await ensureAdminAccount(db);
   const app = express();
   const origin = options.origin || process.env.APP_ORIGIN || `http://127.0.0.1:${process.env.PORT || 3000}`;
   const scans = createScanService({ db, origin });
@@ -41,6 +43,7 @@ export async function createApp(options = {}) {
   });
   app.use('/api/evaluations', evaluator.router);
   app.use('/api/payments', createPayments({ db, requireAuth, env: options.paymentEnv || process.env, client: options.payosClient }));
+  app.use('/api/admin', createAdminRouter({ db }));
   app.get("/api/health", async (_request, response) => {
     await db.prepare("SELECT 1 AS healthy").get();
     response.json({ ok: true, service: "greenshield" });

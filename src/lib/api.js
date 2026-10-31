@@ -30,3 +30,7 @@ export function patch(path, data) {
   return api(path, { method: "PATCH", body: JSON.stringify(data ?? {}) });
 }
 
+export function del(path) {
+  return api(path, { method: "DELETE" });
+}
+

@@ -219,8 +219,8 @@ export default function BillingPage() {
           >
             <RefreshCw size={15} aria-hidden="true" /> Làm mới trạng thái
           </Button>
-          <Button to="/products" variant="ghost">
-            So sánh các gói
+          <Button to="/app/plans" variant="ghost">
+            <Sparkles size={15} aria-hidden="true" /> Bảng chọn gói & So sánh
           </Button>
         </div>
       </div>
@@ -468,12 +468,25 @@ export default function BillingPage() {
                     </p>
                   </div>
                   <div className="text-left sm:text-right">
-                    <p className="text-3xl font-black text-emerald-300">
-                      {money(config.product.amount)}
+                    <div className="flex items-baseline gap-2 sm:justify-end">
+                      <span className="text-sm font-semibold text-slate-400 line-through">
+                        2.490.000 ₫
+                      </span>
+                      <p className="text-3xl font-black text-emerald-300">
+                        {money(config.product.amount)}
+                      </p>
+                    </div>
+                    <p className="text-xs font-semibold text-amber-200">
+                      {config.product.priceIsSample ? "Mức phí VietQR thử nghiệm (Sandbox)" : "Đã bao gồm phí cổng"}
                     </p>
-                    <p className="text-xs font-semibold text-slate-500">Đã bao gồm phí cổng thanh toán</p>
                   </div>
                 </div>
+
+                {config.product.priceIsSample ? (
+                  <div className="mt-4 rounded-xl border border-sky-300/25 bg-sky-950/30 p-3.5 text-xs text-sky-200 leading-5">
+                    💡 <strong>Tại sao số tiền quét mã là {money(config.product.amount)}?</strong> Cổng thanh toán PayOS đang ở chế độ kiểm thử nghiệm thu (Pilot Sandbox). Hệ thống áp dụng mức giao dịch tượng trưng tối thiểu <strong>{money(config.product.amount)}</strong> (thay vì giá niêm yết 2.490.000 ₫) để quý khách có thể quét mã QR bằng ứng dụng ngân hàng thật và kiểm tra gạch nợ tự động mà không bị trừ tiền lớn.
+                  </div>
+                ) : null}
 
                 <ul className="mt-5 space-y-3 text-sm text-slate-200">
                   {planFeatures.map((feature) => (

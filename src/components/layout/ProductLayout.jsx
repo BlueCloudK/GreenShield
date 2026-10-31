@@ -1,4 +1,4 @@
-import { Activity, CreditCard, FolderKanban, LayoutDashboard, LogOut, Menu, Plus, ShieldCheck, X } from "lucide-react";
+import { Activity, CreditCard, FolderKanban, LayoutDashboard, LogOut, Menu, Plus, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -9,7 +9,8 @@ const baseNavigation = [
   { label: "Tổng quan", to: "/app", icon: LayoutDashboard, end: true },
   { label: "Projects", to: "/app/projects", icon: FolderKanban },
   { label: "Đánh giá chatbot", to: "/app/evaluator", icon: Activity },
-  { label: "Thanh toán", to: "/app/billing", icon: CreditCard },
+  { label: "Gói & Nâng cấp", to: "/app/plans", icon: Sparkles },
+  { label: "Thanh toán & Hóa đơn", to: "/app/billing", icon: CreditCard },
 ];
 
 export function ProductLayout() {

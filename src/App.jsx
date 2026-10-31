@@ -13,6 +13,7 @@ import LoginPage from "./pages/LoginPage";
 import NewProjectPage from "./pages/NewProjectPage";
 import NewProjectScanPage from "./pages/NewProjectScanPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import PlansPage from "./pages/PlansPage";
 import ProductsPage from "./pages/ProductsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
@@ -46,6 +47,7 @@ export default function App() {
         <Route index element={<DashboardPage />} />
         <Route element={<AdminPage />} path="admin" />
         <Route element={<EndpointEvaluatorPage />} path="evaluator" />
+        <Route element={<PlansPage />} path="plans" />
         <Route element={<BillingPage />} path="billing" />
         <Route element={<ProjectsPage />} path="projects" />
         <Route element={<NewProjectPage />} path="projects/new" />
@@ -56,6 +58,7 @@ export default function App() {
       </Route>
 
       <Route element={<Navigate replace to="/app/admin" />} path="/admin" />
+      <Route element={<Navigate replace to="/app/plans" />} path="/plans" />
       <Route element={<Navigate replace to="/app" />} path="/dashboard" />
       <Route element={<Navigate replace to="/app/projects/new" />} path="/scan/new" />
       <Route element={<Navigate replace to="/app" />} path="/scan/progress" />

@@ -6,9 +6,11 @@ import {
   MessageSquareQuote,
   RefreshCw,
   ShieldCheck,
+  Sparkles,
   Trash2,
   UserPlus,
   Users,
+  XCircle,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { StarRating } from "../components/feedback/StarRating";
@@ -102,6 +104,50 @@ export default function AdminPage() {
     }
   }
 
+  async function handleGrantPlan(userId, email) {
+    setActionMessage("");
+    try {
+      await post(`/api/admin/users/${userId}/grant-plan`, {});
+      setActionMessage(`Đã kích hoạt gói AI App Assessment (PAID) và gỡ các đơn treo cho ${email}.`);
+      await fetchOverview();
+    } catch (err) {
+      setActionMessage(`Lỗi: ${err.message}`);
+    }
+  }
+
+  async function handleClearStuckOrders(userId, email) {
+    setActionMessage("");
+    try {
+      await post(`/api/admin/users/${userId}/clear-orders`, {});
+      setActionMessage(`Đã xóa toàn bộ đơn thanh toán bị treo của ${email}.`);
+      await fetchOverview();
+    } catch (err) {
+      setActionMessage(`Lỗi: ${err.message}`);
+    }
+  }
+
+  async function handleUpdatePaymentStatus(orderId, status) {
+    setActionMessage("");
+    try {
+      await patch(`/api/admin/payments/${orderId}`, { status });
+      setActionMessage(`Đã cập nhật trạng thái đơn thanh toán sang ${status}.`);
+      await fetchOverview();
+    } catch (err) {
+      setActionMessage(`Lỗi: ${err.message}`);
+    }
+  }
+
+  async function handleDeletePayment(orderId) {
+    setActionMessage("");
+    try {
+      await del(`/api/admin/payments/${orderId}`);
+      setActionMessage("Đã xóa đơn thanh toán khỏi hệ thống.");
+      await fetchOverview();
+    } catch (err) {
+      setActionMessage(`Lỗi: ${err.message}`);
+    }
+  }
+
   async function handleDeleteUser(userId, email) {
     setActionMessage("");
     try {
@@ -178,7 +224,7 @@ export default function AdminPage() {
           </div>
           <h1 className="mt-2 text-3xl font-black text-white">Quản trị hệ thống GreenShield</h1>
           <p className="mt-1 text-sm text-slate-400">
-            Quản lý tài khoản người dùng, yêu cầu tư vấn assessment, đơn thanh toán PayOS, lịch sử scan và đánh giá sản phẩm.
+            Quản lý tài khoản người dùng, gỡ đơn thanh toán treo, cấp gói dịch vụ, duyệt liên hệ và kiểm duyệt đánh giá sản phẩm.
           </p>
         </div>
         <Button onClick={fetchOverview} variant="secondary">
@@ -234,7 +280,7 @@ export default function AdminPage() {
 
       {/* TAB 1: USERS */}
       {activeTab === "users" ? (
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.45fr_0.75fr] lg:items-start">
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1.5fr_0.7fr] lg:items-start">
           <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/55">
             <div className="flex flex-col gap-3 border-b border-white/10 p-4 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-base font-black text-white">
@@ -249,14 +295,14 @@ export default function AdminPage() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="min-w-[680px] w-full text-left text-xs">
+              <table className="min-w-[780px] w-full text-left text-xs">
                 <thead className="bg-white/[0.03] uppercase tracking-wider text-slate-400">
                   <tr>
                     <th className="px-4 py-3 font-black">Người dùng</th>
-                    <th className="px-4 py-3 font-black">Workspace / Công ty</th>
+                    <th className="px-4 py-3 font-black">Workspace / Gói</th>
                     <th className="px-4 py-3 font-black">Trạng thái</th>
                     <th className="px-4 py-3 font-black">Hoạt động</th>
-                    <th className="px-4 py-3 font-black text-right">Thao tác</th>
+                    <th className="px-4 py-3 font-black text-right">Thao tác quản trị</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
@@ -275,7 +321,22 @@ export default function AdminPage() {
                       </td>
                       <td className="px-4 py-3.5">
                         <p className="font-semibold text-slate-200">{u.workspace_name || "—"}</p>
-                        <p className="mt-0.5 text-slate-500">{u.company || "Cá nhân"}</p>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {Number(u.paid_orders_count) > 0 ? (
+                            <span className="rounded-full border border-emerald-300/30 bg-emerald-300/15 px-2 py-0.5 text-[10px] font-black text-emerald-200">
+                              Assessment PAID
+                            </span>
+                          ) : (
+                            <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] text-slate-400">
+                              Pilot
+                            </span>
+                          )}
+                          {Number(u.pending_orders_count) > 0 ? (
+                            <span className="rounded-full border border-amber-300/30 bg-amber-300/15 px-2 py-0.5 text-[10px] font-black text-amber-200">
+                              Đang treo {u.pending_orders_count} đơn
+                            </span>
+                          ) : null}
+                        </div>
                       </td>
                       <td className="px-4 py-3.5">
                         {u.email_verified_at ? (
@@ -295,16 +356,34 @@ export default function AdminPage() {
                         </p>
                       </td>
                       <td className="px-4 py-3.5 text-right">
-                        <div className="inline-flex items-center gap-2">
+                        <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
                           {!u.email_verified_at ? (
                             <button
                               className="rounded-lg border border-emerald-300/30 bg-emerald-300/10 px-2.5 py-1 font-bold text-emerald-200 hover:bg-emerald-300/20"
                               onClick={() => handleVerifyUser(u.id, u.email)}
                               type="button"
                             >
-                              Kích hoạt
+                              Xác minh Email
                             </button>
                           ) : null}
+                          {Number(u.pending_orders_count) > 0 ? (
+                            <button
+                              className="rounded-lg border border-amber-300/30 bg-amber-300/10 px-2.5 py-1 font-bold text-amber-200 hover:bg-amber-300/20"
+                              onClick={() => handleClearStuckOrders(u.id, u.email)}
+                              title="Xóa các đơn 2k đang bị treo của tài khoản này"
+                              type="button"
+                            >
+                              Gỡ đơn treo
+                            </button>
+                          ) : null}
+                          <button
+                            className="inline-flex items-center gap-1 rounded-lg border border-sky-300/30 bg-sky-300/10 px-2.5 py-1 font-bold text-sky-200 hover:bg-sky-300/20"
+                            onClick={() => handleGrantPlan(u.id, u.email)}
+                            title="Kích hoạt gói AI App Assessment (PAID) và gỡ đơn treo"
+                            type="button"
+                          >
+                            <Sparkles size={12} /> Cấp gói PAID
+                          </button>
                           {!u.isAdmin ? (
                             <button
                               aria-label={`Xóa ${u.email}`}
@@ -429,53 +508,93 @@ export default function AdminPage() {
 
       {/* TAB 3: PAYMENTS & SCANS */}
       {activeTab === "payments" ? (
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div className="mt-6 space-y-6">
           <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/55">
             <div className="border-b border-white/10 p-4">
               <h2 className="text-base font-black text-white">
-                Đơn thanh toán PayOS ({(data?.payments || []).length})
+                Quản lý Đơn thanh toán PayOS ({(data?.payments || []).length})
               </h2>
+              <p className="mt-0.5 text-xs text-slate-400">
+                Admin có thể duyệt thanh toán thủ công (PAID), hủy đơn treo (CANCELLED) hoặc xóa hẳn đơn nháp khỏi hệ thống.
+              </p>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="min-w-[760px] w-full text-left text-xs">
                 <thead className="bg-white/[0.03] uppercase tracking-wider text-slate-400">
                   <tr>
                     <th className="px-4 py-3 font-black">Mã đơn / Gói</th>
-                    <th className="px-4 py-3 font-black">Khách hàng</th>
+                    <th className="px-4 py-3 font-black">Khách hàng / Workspace</th>
                     <th className="px-4 py-3 font-black">Số tiền</th>
                     <th className="px-4 py-3 font-black">Trạng thái</th>
+                    <th className="px-4 py-3 font-black text-right">Thao tác Admin</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
                   {(data?.payments || []).map((po) => (
                     <tr className="text-slate-300" key={po.id}>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3.5">
                         <p className="font-bold text-white">#{po.order_code}</p>
                         <p className="text-slate-400">{po.product_name}</p>
+                        <p className="mt-0.5 text-[11px] text-slate-500">
+                          {String(po.created_at || "").slice(0, 16).replace("T", " ")}
+                        </p>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3.5">
                         <p className="font-semibold text-slate-200">{po.user_name || "—"}</p>
                         <p className="text-slate-400">{po.user_email}</p>
+                        <p className="text-[11px] text-slate-500">{po.workspace_name}</p>
                       </td>
-                      <td className="px-4 py-3 font-bold text-white">
+                      <td className="px-4 py-3.5 font-bold text-white">
                         {Number(po.amount || 0).toLocaleString("vi-VN")} {po.currency}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3.5">
                         <span
                           className={`rounded-full border px-2.5 py-0.5 font-black ${
                             po.status === "PAID"
                               ? "border-emerald-300/30 bg-emerald-300/15 text-emerald-200"
+                              : po.status === "PENDING"
+                              ? "border-amber-300/30 bg-amber-300/15 text-amber-200"
                               : "border-white/10 bg-white/[0.05] text-slate-300"
                           }`}
                         >
                           {po.status}
                         </span>
                       </td>
+                      <td className="px-4 py-3.5 text-right">
+                        <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
+                          {po.status !== "PAID" ? (
+                            <button
+                              className="inline-flex items-center gap-1 rounded-lg border border-emerald-300/30 bg-emerald-300/10 px-2.5 py-1 font-bold text-emerald-200 hover:bg-emerald-300/20"
+                              onClick={() => handleUpdatePaymentStatus(po.id, "PAID")}
+                              type="button"
+                            >
+                              <CheckCircle2 size={12} /> Duyệt PAID
+                            </button>
+                          ) : null}
+                          {po.status !== "CANCELLED" ? (
+                            <button
+                              className="inline-flex items-center gap-1 rounded-lg border border-amber-300/30 bg-amber-300/10 px-2.5 py-1 font-bold text-amber-200 hover:bg-amber-300/20"
+                              onClick={() => handleUpdatePaymentStatus(po.id, "CANCELLED")}
+                              type="button"
+                            >
+                              <XCircle size={12} /> Hủy đơn
+                            </button>
+                          ) : null}
+                          <button
+                            className="inline-flex items-center gap-1 rounded-lg border border-rose-300/25 bg-rose-400/10 px-2.5 py-1 font-bold text-rose-200 hover:bg-rose-400/20"
+                            onClick={() => handleDeletePayment(po.id)}
+                            title="Xóa đơn"
+                            type="button"
+                          >
+                            <Trash2 size={12} /> Xóa
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                   {(data?.payments || []).length === 0 ? (
                     <tr>
-                      <td className="px-4 py-6 text-center text-slate-500" colSpan={4}>
+                      <td className="px-4 py-6 text-center text-slate-500" colSpan={5}>
                         Chưa có giao dịch thanh toán nào.
                       </td>
                     </tr>

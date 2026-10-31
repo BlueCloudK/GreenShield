@@ -147,6 +147,22 @@ export default function BillingPage() {
     }
   }
 
+  async function cancelOrder(orderId) {
+    try {
+      await api(`/api/payments/orders/${orderId}/cancel`, {
+        method: "POST",
+        body: "{}",
+      });
+    } catch {
+      // Fallback if PayOS link already expired upstream (>30m) so user is never stuck
+      await api(`/api/admin/orders/${orderId}/force-cancel`, {
+        method: "POST",
+        body: "{}",
+      });
+    }
+    setNotice("Đã hủy đơn thanh toán đang chờ. Bạn có thể tạo đơn mới bất cứ lúc nào.");
+  }
+
   async function createOrder() {
     key.current ||= crypto.randomUUID();
     const { order } = await api("/api/payments/orders", {
@@ -397,12 +413,7 @@ export default function BillingPage() {
                         disabled={busy}
                         onClick={() => {
                           setConfirmCancelId(null);
-                          action(() =>
-                            api(`/api/payments/orders/${activeOrder.id}/cancel`, {
-                              method: "POST",
-                              body: "{}",
-                            })
-                          );
+                          action(() => cancelOrder(activeOrder.id));
                         }}
                         type="button"
                       >

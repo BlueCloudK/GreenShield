@@ -1,11 +1,36 @@
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import express from "express";
-import { isAdminEmail, requireAdminAuth } from "../auth.js";
+import { authenticate, isAdminEmail, requireAdminAuth } from "../auth.js";
 
 export function createAdminRouter({ db }) {
   const router = express.Router();
+  const requireAuth = authenticate(db);
   const requireAdmin = requireAdminAuth(db);
+
+  // Allow workspace owner or admin to force-cancel their own stuck order
+  router.post("/orders/:orderId/force-cancel", requireAuth, async (request, response, next) => {
+    try {
+      const order = await db
+        .prepare("SELECT * FROM payment_orders WHERE id=?")
+        .get(request.params.orderId);
+      const isAdmin = isAdminEmail(request.auth?.email);
+      if (!order || (!isAdmin && order.workspace_id !== request.auth?.workspace?.id)) {
+        return response.status(404).json({ message: "Không tìm thấy đơn thanh toán." });
+      }
+      if (order.status !== "PAID") {
+        await db
+          .prepare("UPDATE payment_orders SET status='CANCELLED', updated_at=? WHERE id=?")
+          .run(new Date().toISOString(), order.id);
+      }
+      const updated = await db
+        .prepare("SELECT * FROM payment_orders WHERE id=?")
+        .get(request.params.orderId);
+      response.json({ order: updated });
+    } catch (error) {
+      next(error);
+    }
+  });
 
   router.use(requireAdmin);
 
@@ -39,7 +64,9 @@ export function createAdminRouter({ db }) {
             w.name AS workspace_name,
             wm.role,
             (SELECT COUNT(*) FROM projects p WHERE p.workspace_id=w.id AND p.archived_at IS NULL) AS project_count,
-            (SELECT COUNT(*) FROM scans s JOIN projects p ON p.id=s.project_id WHERE p.workspace_id=w.id) AS scan_count
+            (SELECT COUNT(*) FROM scans s JOIN projects p ON p.id=s.project_id WHERE p.workspace_id=w.id) AS scan_count,
+            (SELECT COUNT(*) FROM payment_orders po WHERE po.workspace_id=w.id AND po.status IN ('CREATING','PENDING','UNKNOWN')) AS pending_orders_count,
+            (SELECT COUNT(*) FROM payment_orders po WHERE po.workspace_id=w.id AND po.status='PAID') AS paid_orders_count
           FROM users u
           LEFT JOIN workspace_members wm ON wm.user_id=u.id
           LEFT JOIN workspaces w ON w.id=wm.workspace_id
@@ -162,6 +189,89 @@ export function createAdminRouter({ db }) {
         .prepare("UPDATE users SET email_verified_at=?, updated_at=? WHERE id=?")
         .run(stamp, stamp, request.params.userId);
       response.json({ verified: true });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/users/:userId/grant-plan", async (request, response, next) => {
+    try {
+      const member = await db
+        .prepare("SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1")
+        .get(request.params.userId);
+      if (!member) return response.status(404).json({ message: "Không tìm thấy workspace của người dùng." });
+
+      const stamp = new Date().toISOString();
+      await db
+        .prepare(
+          "UPDATE payment_orders SET status='CANCELLED', updated_at=? WHERE workspace_id=? AND status IN ('CREATING','PENDING','UNKNOWN')"
+        )
+        .run(stamp, member.workspace_id);
+
+      const orderId = crypto.randomUUID();
+      const orderCode = Date.now() * 1000 + crypto.randomInt(1000);
+      await db
+        .prepare(
+          `INSERT INTO payment_orders (id, workspace_id, created_by, idempotency_key, order_code, product_id, product_name, amount, currency, status, created_at, updated_at, paid_at)
+           VALUES (?, ?, ?, ?, ?, 'assessment', 'AI App Assessment', 2000, 'VND', 'PAID', ?, ?, ?)`
+        )
+        .run(orderId, member.workspace_id, request.params.userId, `admin-grant-${orderId}`, orderCode, stamp, stamp, stamp);
+      await db
+        .prepare(
+          `INSERT INTO payment_receipts (order_id, provider_reference, amount, paid_at)
+           VALUES (?, ?, 2000, ?)`
+        )
+        .run(orderId, `admin-grant-${orderCode}`, stamp);
+
+      response.json({ granted: true, orderId });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/users/:userId/clear-orders", async (request, response, next) => {
+    try {
+      const member = await db
+        .prepare("SELECT workspace_id FROM workspace_members WHERE user_id=? LIMIT 1")
+        .get(request.params.userId);
+      if (!member) return response.status(404).json({ message: "Không tìm thấy workspace." });
+      await db
+        .prepare(
+          "DELETE FROM payment_orders WHERE workspace_id=? AND status IN ('CREATING','PENDING','UNKNOWN','CANCELLED','EXPIRED')"
+        )
+        .run(member.workspace_id);
+      response.json({ cleared: true });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch("/payments/:orderId", async (request, response, next) => {
+    try {
+      const nextStatus = String(request.body?.status || "").toUpperCase();
+      if (!["PAID", "CANCELLED", "PENDING"].includes(nextStatus)) {
+        return response.status(400).json({ message: "Trạng thái không hợp lệ." });
+      }
+      const stamp = new Date().toISOString();
+      if (nextStatus === "PAID") {
+        await db
+          .prepare("UPDATE payment_orders SET status='PAID', paid_at=?, updated_at=? WHERE id=?")
+          .run(stamp, stamp, request.params.orderId);
+      } else {
+        await db
+          .prepare("UPDATE payment_orders SET status=?, updated_at=? WHERE id=?")
+          .run(nextStatus, stamp, request.params.orderId);
+      }
+      response.json({ updated: true, status: nextStatus });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete("/payments/:orderId", async (request, response, next) => {
+    try {
+      await db.prepare("DELETE FROM payment_orders WHERE id=?").run(request.params.orderId);
+      response.json({ deleted: true });
     } catch (error) {
       next(error);
     }

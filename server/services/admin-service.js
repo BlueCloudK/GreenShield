@@ -213,13 +213,13 @@ export function createAdminRouter({ db }) {
       await db
         .prepare(
           `INSERT INTO payment_orders (id, workspace_id, created_by, idempotency_key, order_code, product_id, product_name, amount, currency, status, created_at, updated_at, paid_at)
-           VALUES (?, ?, ?, ?, ?, 'assessment', 'AI App Assessment', 2000, 'VND', 'PAID', ?, ?, ?)`
+           VALUES (?, ?, ?, ?, ?, 'assessment', 'AI App Assessment', 2490000, 'VND', 'PAID', ?, ?, ?)`
         )
         .run(orderId, member.workspace_id, request.params.userId, `admin-grant-${orderId}`, orderCode, stamp, stamp, stamp);
       await db
         .prepare(
           `INSERT INTO payment_receipts (order_id, provider_reference, amount, paid_at)
-           VALUES (?, ?, 2000, ?)`
+           VALUES (?, ?, 2490000, ?)`
         )
         .run(orderId, `admin-grant-${orderCode}`, stamp);
 

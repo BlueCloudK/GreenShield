@@ -9,7 +9,7 @@ const pending = new Set(['CREATING', 'PENDING', 'UNKNOWN']);
 
 export function paymentConfig(env = process.env) {
   const enabled = env.PAYOS_ENABLED === 'true';
-  const amount = Number(env.PAYOS_ASSESSMENT_AMOUNT_VND);
+  const amount = Number(env.PAYOS_ASSESSMENT_AMOUNT_VND) || 2490000;
   const priced = Number.isSafeInteger(amount) && amount >= 2000 && amount <= 100_000_000;
   if (!enabled) return { enabled: false, amount: priced ? amount : null };
   if (env.NODE_ENV === 'production' && env.PAYOS_PRODUCTION_APPROVED !== 'true') {

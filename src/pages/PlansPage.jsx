@@ -262,22 +262,7 @@ export default function PlansPage() {
         </div>
       </div>
 
-      {/* 2. THÔNG BÁO MINH BẠCH VỀ MỨC PHÍ 2.000 ₫ TRÊN PAYOS */}
-      <div className="mt-6 flex items-start gap-3.5 rounded-2xl border border-sky-300/30 bg-sky-950/30 p-4 sm:p-5 text-sm text-sky-100">
-        <Info size={20} className="mt-0.5 shrink-0 text-sky-300" aria-hidden="true" />
-        <div className="leading-6">
-          <p className="font-bold text-white">
-            Lưu ý về số tiền thanh toán 2.000 ₫ trên cổng PayOS (VietQR)
-          </p>
-          <p className="mt-1 text-xs text-sky-200/90 leading-5">
-            Gói <strong>AI App Assessment</strong> có giá niêm yết thương mại chính thức là <strong>2.490.000 ₫ / đợt</strong>.
-            Tuy nhiên, trong giai đoạn thử nghiệm nghiệm thu (Pilot Sandbox) với cổng thanh toán PayOS thật, hệ thống được cấu hình số tiền giao dịch tượng trưng là <strong>2.000 ₫</strong> (mức tối thiểu cho phép của PayOS).
-            Điều này cho phép bạn quét mã QR bằng ứng dụng ngân hàng thật để kiểm tra toàn bộ luồng tạo đơn, gạch nợ tự động qua Webhook và cấp biên lai mà <strong>không bị trừ số tiền lớn thật</strong>.
-          </p>
-        </div>
-      </div>
-
-      {/* 3. DANH SÁCH 4 GÓI DỊCH VỤ ĐỂ CHỌN */}
+      {/* 2. DANH SÁCH 4 GÓI DỊCH VỤ ĐỂ CHỌN */}
       <div className="mt-8">
         <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
           <div>

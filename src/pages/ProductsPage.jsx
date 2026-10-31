@@ -3,11 +3,24 @@ import { ProductReviewsSection } from "../components/feedback/ProductReviewsSect
 import { PricingComparison } from "../components/pricing/PricingComparison";
 import { Button } from "../components/ui/Button";
 import { SectionHeader } from "../components/ui/SectionHeader";
+import { useAuth } from "../context/AuthContext";
 import { pricingPlans } from "../data/scans";
 
 const planBadges = ["Cơ bản", "Phổ biến", "Nâng cao", "Doanh nghiệp"];
 
 export default function ProductsPage() {
+  const { isAuthenticated } = useAuth();
+
+  function getPlanDestination(planName) {
+    if (planName === "Product Preview") {
+      return isAuthenticated ? "/app/projects/new" : "/login?mode=register";
+    }
+    if (planName === "AI App Assessment") {
+      return isAuthenticated ? "/app/billing" : "/login?mode=login";
+    }
+    return "/contact";
+  }
+
   return (
     <>
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -69,8 +82,18 @@ export default function ProductsPage() {
                   <span className="font-bold text-white">Review thủ công:</span> {plan.manualReview}
                 </p>
               </div>
-              <Button className="mt-4 w-full" data-testid={`pricing-plan-${pricingPlans.indexOf(plan) + 1}`} to={plan.name === "Product Preview" ? "/login" : "/contact"} variant={plan.name === "Product Preview" ? "primary" : "secondary"}>
-                {plan.ctaLabel}
+              <Button
+                className="mt-4 w-full"
+                data-testid={`pricing-plan-${pricingPlans.indexOf(plan) + 1}`}
+                state={
+                  plan.name === "AI App Assessment" && !isAuthenticated
+                    ? { from: { pathname: "/app/billing" } }
+                    : undefined
+                }
+                to={getPlanDestination(plan.name)}
+                variant={plan.name === "Product Preview" || plan.name === "AI App Assessment" ? "primary" : "secondary"}
+              >
+                {plan.name === "AI App Assessment" ? "Đăng ký & Thanh toán" : plan.ctaLabel}
               </Button>
             </article>
           ))}

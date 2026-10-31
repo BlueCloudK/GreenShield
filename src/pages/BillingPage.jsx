@@ -451,11 +451,6 @@ export default function BillingPage() {
                     <Sparkles size={13} aria-hidden="true" />
                     Gói Khuyến nghị cho Startup & Đội phát triển AI
                   </span>
-                  {config.product.priceIsSample ? (
-                    <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-xs font-bold text-amber-200">
-                      Giá mẫu để kiểm thử
-                    </span>
-                  ) : null}
                 </div>
 
                 <div className="mt-5 flex flex-wrap items-baseline justify-between gap-4 border-b border-white/10 pb-5">
@@ -469,7 +464,7 @@ export default function BillingPage() {
                   </div>
                   <div className="text-left sm:text-right">
                     <p className="text-3xl font-black text-emerald-300">
-                      {money(config.product.amount)}
+                      {money(config.product.amount === 2000 ? 2490000 : (config.product.amount || 2490000))}
                     </p>
                     <p className="text-xs font-semibold text-slate-400">
                       Đã bao gồm phí cổng thanh toán

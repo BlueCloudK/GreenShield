@@ -17,6 +17,7 @@ import PrivacyPage from "./pages/PrivacyPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import ReportPage from "./pages/ReportPage";
+import ReviewsPage from "./pages/ReviewsPage";
 import ScanDetailPage from "./pages/ScanDetailPage";
 import EndpointEvaluatorPage from "./pages/EndpointEvaluatorPage";
 
@@ -33,6 +34,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route element={<ProductsPage />} path="/products" />
+        <Route element={<ReviewsPage />} path="/reviews" />
         <Route element={<LoginPage />} path="/login" />
         <Route element={<AboutPage />} path="/about" />
         <Route element={<ContactPage />} path="/contact" />

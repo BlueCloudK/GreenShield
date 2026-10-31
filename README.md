@@ -143,3 +143,8 @@ See [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md) and [docs/ARCHITECTURE.md](docs/ARC
 ## EXE201 Outcome 1
 
 The [OC1 GreenShield dossier](docs/OC1_GREENSHIELD.md) maps the product to tasks 1.1-1.10 and lists the evidence still required before submission.
+
+## Product reviews (`/reviews`)
+
+- Featured product reviews appear on the Home page (`/`) and Pricing page (`/products`).
+- The dedicated `/reviews` page provides overall rating breakdown, filtering by service plan and star rating, sorting (`Mới nhất`, `Hữu ích nhất`, `Số sao cao nhất`), and an interactive review submission form persisted in browser `localStorage` for demo sessions.

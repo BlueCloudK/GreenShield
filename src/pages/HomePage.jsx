@@ -12,6 +12,7 @@ import {
   ShieldAlert,
   Workflow,
 } from "lucide-react";
+import { ProductReviewsSection } from "../components/feedback/ProductReviewsSection";
 import { PricingComparison } from "../components/pricing/PricingComparison";
 import { AttackSurfaceVisual } from "../components/security/AttackSurfaceVisual";
 import { Button } from "../components/ui/Button";
@@ -415,6 +416,8 @@ export default function HomePage() {
           <PricingComparison plans={pricingPlans} />
         </div>
       </section>
+
+      <ProductReviewsSection limit={3} />
 
       <section className="wide-container pb-20" id="contact">
         <div className="grid gap-6 rounded-[2rem] border border-emerald-300/20 bg-emerald-300/[0.06] p-7 sm:p-9 lg:grid-cols-[1fr_auto] lg:items-center">

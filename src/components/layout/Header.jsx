@@ -8,6 +8,7 @@ import { Button } from "../ui/Button";
 const navItems = [
   { label: "Sản phẩm", to: "/" },
   { label: "Bảng giá", to: "/products" },
+  { label: "Đánh giá", to: "/reviews" },
   { label: "Cách hoạt động", to: "/#workflow" },
   { label: "Liên hệ", to: "/contact" },
 ];

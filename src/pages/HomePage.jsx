@@ -109,7 +109,7 @@ const reportRows = [
   ["Kiểm tra lộ API đã đạt", "Lộ API", "Đạt", "Đã xác minh"],
 ];
 
-const planBadges = ["Kiểm thử", "Assessment", "Red team", "Dự án"];
+const planBadges = ["Cá nhân", "Nhóm", "Mở rộng", "Doanh nghiệp"];
 
 function severityClass(severity) {
   const classes = {
@@ -365,7 +365,7 @@ export default function HomePage() {
               Chọn gói theo độ sâu kiểm thử
             </h2>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-400">
-              Bắt đầu bằng scan tự động, sau đó nâng cấp sang assessment có bằng chứng, xuất báo cáo, retest và review thủ công khi cần.
+              Các gói và hạn mức đang được hoàn thiện. Liên hệ GreenShield để xác nhận phạm vi và đăng ký.
             </p>
           </div>
           <Button className="w-full sm:w-fit" to="/products" variant="secondary">
@@ -375,7 +375,7 @@ export default function HomePage() {
 
         <div className="mt-10 grid gap-4 lg:grid-cols-4">
           {pricingPlans.map((plan, index) => {
-            const isHighlighted = plan.name === "AI App Assessment";
+            const isHighlighted = plan.id === "team";
 
             return (
               <article
@@ -399,6 +399,7 @@ export default function HomePage() {
                 <h3 className="mt-5 text-2xl font-black text-white">{plan.name}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-400">{plan.targetUser}</p>
                 <p className="mt-6 text-3xl font-black text-white">{plan.price}</p>
+                <p className="mt-1 text-sm text-slate-400">{plan.priceNote}</p>
                 <ul className="mt-6 space-y-3 text-sm text-slate-300">
                   {plan.features.map((feature) => (
                     <li className="flex gap-2" key={feature}>

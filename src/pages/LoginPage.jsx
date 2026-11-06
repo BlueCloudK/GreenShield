@@ -91,7 +91,10 @@ export default function LoginPage() {
   const [registerTouched, setRegisterTouched] = useState({});
   const [loginTouched, setLoginTouched] = useState({});
 
-  const redirectTo = location.state?.from?.pathname || "/app";
+  const from = location.state?.from;
+  const redirectTo = from?.pathname?.startsWith("/") && !from.pathname.startsWith("//")
+    ? `${from.pathname}${from.search || ""}${from.hash || ""}`
+    : "/app";
 
   useEffect(() => {
     if (isAuthenticated && !location.state?.skipAuthRedirect) {

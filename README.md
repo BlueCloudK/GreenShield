@@ -154,5 +154,7 @@ The [OC1 GreenShield dossier](docs/OC1_GREENSHIELD.md) maps the product to tasks
 - System administrators (`admin@greenshieldai.tech`) can access `/app/admin` to view system-wide KPIs, manage user accounts (verify email, create verified accounts without OTP, delete test accounts), review contact/assessment requests, inspect PayOS payment orders and security scans across workspaces, and moderate product reviews.
 # Gói thuê bao dự kiến
 
-Bảng giá tại `/products` và `/app/plans` mô tả các gói Builder, Team, Scale và Enterprise. Giá và hạn mức là phương án dự kiến; checkout PayOS hiện có vẫn dành cho assessment cũ, chưa hỗ trợ mua hoặc áp dụng hạn mức cho các gói thuê bao này. Liên hệ để xác nhận trước khi đăng ký.
+Bảng giá tại `/products` và `/app/plans` mô tả các gói Builder, Team, Scale và Enterprise. Luồng PayOS cho thuê bao được bảo vệ bởi `SUBSCRIPTION_CHECKOUT_ENABLED=false` mặc định. Chỉ bật để kiểm thử với PayOS giả lập: hạn mức ứng dụng, bài kiểm thử và thành viên chưa được áp dụng thực tế, không được mở bán trước khi hoàn thiện và kiểm thử phần này. Mỗi lần thanh toán cấp một kỳ một tháng, không tự động gia hạn. Không đưa khóa PayOS vào mã nguồn.
+
+Kiểm tra luồng giao diện bằng `npm run build` rồi `node scripts/verify-payment-ui.mjs`. Script dùng SQLite trong bộ nhớ và nhà cung cấp giả lập, không gọi PayOS thật; ảnh desktop/mobile lưu tại `artifacts/payments/`. Thu tiền thuê bao trên production còn yêu cầu `SUBSCRIPTION_PRODUCTION_APPROVED=true` riêng sau khi được duyệt. Không bật cờ này chỉ để thử giao diện.
 

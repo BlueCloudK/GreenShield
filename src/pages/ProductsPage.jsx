@@ -22,7 +22,7 @@ export default function ProductsPage({ insideAccount = false }) {
             <ul className="mt-5 flex-1 space-y-3 border-t border-white/10 pt-5 text-sm text-slate-300">
               {[plan.applications, plan.tests, plan.members, ...plan.features].map((feature, index) => <li className="flex gap-2" key={`${plan.id}-${index}`}><CheckCircle2 className="mt-0.5 shrink-0 text-emerald-300" size={16} aria-hidden="true" />{feature}</li>)}
             </ul>
-            <Button className="mt-6 w-full" to="/contact" variant={plan.id === "team" ? "primary" : "secondary"}>{plan.id === "enterprise" ? "Liên hệ tư vấn" : "Liên hệ đăng ký"}</Button>
+            <Button className="mt-6 w-full" to={plan.id === "enterprise" ? "/contact" : `/app/billing?plan=${plan.id}`} variant={plan.id === "team" ? "primary" : "secondary"}>{plan.id === "enterprise" ? "Liên hệ tư vấn" : "Chọn gói"}</Button>
           </article>
         ))}
       </div>

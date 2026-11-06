@@ -5,6 +5,8 @@ const configured = Object.fromEntries(keys.map(key => [key, Boolean(process.env[
 console.log(JSON.stringify({
   keys: configured,
   enabled: process.env.PAYOS_ENABLED === 'true',
+  subscriptionCheckoutEnabled: process.env.SUBSCRIPTION_CHECKOUT_ENABLED === 'true',
+  subscriptionProductionApproved: process.env.SUBSCRIPTION_PRODUCTION_APPROVED === 'true',
   samplePriceVnd: Number(process.env.PAYOS_ASSESSMENT_AMOUNT_VND) || null,
   smtpConfigured: Boolean(process.env.SMTP_USER?.trim() && process.env.SMTP_PASS?.trim()),
   externalRequestsMade: false,

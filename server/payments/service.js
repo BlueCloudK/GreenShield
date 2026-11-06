@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import express from 'express';
 import { createPayOS } from './payos.js';
 import { transactionLock } from '../db/locks.js';
+import { addMonth, subscriptionPlans } from './plans.js';
 
 const now = () => new Date().toISOString();
 const fail = (status, message) => Object.assign(new Error(message), { status });
@@ -28,6 +29,9 @@ export function paymentConfig(env = process.env) {
 
 export function createPayments({ db, requireAuth, env = process.env, client }) {
   const config = paymentConfig(env);
+  if (env.SUBSCRIPTION_CHECKOUT_ENABLED === 'true' && env.NODE_ENV === 'production' && env.SUBSCRIPTION_PRODUCTION_APPROVED !== 'true') {
+    throw new Error('Subscription production activation is not authorized.');
+  }
   const payos = config.enabled ? (client || createPayOS(env)) : null;
   const router = express.Router();
   const get = code => db.prepare('SELECT * FROM payment_orders WHERE order_code=?').get(code);
@@ -77,6 +81,13 @@ export function createPayments({ db, requireAuth, env = process.env, client }) {
       await db.prepare("UPDATE payment_orders SET status='PAID', paid_at=?, updated_at=? WHERE id=?").run(paidAt, paidAt, order.id);
       await db.prepare('INSERT INTO payment_receipts (order_id,provider_reference,amount,paid_at) VALUES (?,?,?,?)')
         .run(order.id, data.id, order.amount, paidAt);
+      if (order.applications != null) {
+        await transactionLock(db, `subscription:${order.workspace_id}`);
+        const last = await db.prepare('SELECT ends_at FROM subscription_periods WHERE workspace_id=? ORDER BY ends_at DESC LIMIT 1').get(order.workspace_id);
+        const startsAt = last?.ends_at > paidAt ? last.ends_at : paidAt;
+        await db.prepare(`INSERT INTO subscription_periods (order_id,workspace_id,plan_id,applications,tests,members,starts_at,ends_at,created_at)
+          VALUES (?,?,?,?,?,?,?,?,?)`).run(order.id, order.workspace_id, order.product_id, order.applications, order.test_allowance, order.member_allowance, startsAt, addMonth(startsAt), paidAt);
+      }
     } else if (['PENDING', 'CANCELLED', 'EXPIRED'].includes(data.status) && pending.has(latest.status)) {
       await db.prepare('UPDATE payment_orders SET status=?,updated_at=? WHERE id=?').run(data.status, now(), order.id);
     }
@@ -117,8 +128,15 @@ export function createPayments({ db, requireAuth, env = process.env, client }) {
   router.use(requireAuth);
   router.get('/config', (_request, response) => response.json({
     enabled: config.enabled,
+    subscriptionsEnabled: config.enabled && env.SUBSCRIPTION_CHECKOUT_ENABLED === 'true',
+    plans: subscriptionPlans,
     product: { id: 'assessment', name: 'AI App Assessment', amount: config.amount, currency: 'VND', priceIsSample: env.PAYOS_PRICE_IS_SAMPLE === 'true' },
   }));
+  router.get('/subscriptions', async (request, response) => {
+    const periods = await db.prepare('SELECT * FROM subscription_periods WHERE workspace_id=? ORDER BY starts_at DESC').all(request.auth.workspace.id);
+    const stamp = now();
+    response.json({ active: periods.find(period => period.starts_at <= stamp && period.ends_at > stamp) || null, periods });
+  });
   router.get('/orders', async (request, response) => response.json({
     orders: (await db.prepare('SELECT * FROM payment_orders WHERE workspace_id=? ORDER BY created_at DESC LIMIT 50').all(request.auth.workspace.id)).map(safeOrder),
   }));
@@ -127,34 +145,46 @@ export function createPayments({ db, requireAuth, env = process.env, client }) {
   });
   router.post('/orders', enabled, buyer, async (request, response, next) => {
     try {
-      if (request.body?.productId !== 'assessment' || Object.keys(request.body).some(key => key !== 'productId')) throw fail(400, 'Chỉ gửi mã sản phẩm, không gửi giá từ trình duyệt.');
+      const plan = subscriptionPlans.find(item => item.id === request.body?.productId);
+      if ((!plan && request.body?.productId !== 'assessment') || Object.keys(request.body).some(key => key !== 'productId')) throw fail(400, 'Chỉ gửi mã sản phẩm, không gửi giá từ trình duyệt.');
+      if (plan && env.SUBSCRIPTION_CHECKOUT_ENABLED !== 'true') throw fail(503, 'Thanh toán thuê bao chưa được bật.');
       const key = request.headers['idempotency-key'];
       if (typeof key !== 'string' || !/^[a-zA-Z0-9_-]{16,80}$/.test(key)) throw fail(400, 'Thiếu mã chống tạo đơn trùng.');
       const reservation = await db.transaction(async () => {
         await transactionLock(db, `checkout:${request.auth.workspace.id}`);
+        if (plan) {
+          const active = await db.prepare('SELECT plan_id FROM subscription_periods WHERE workspace_id=? AND ends_at>? ORDER BY ends_at DESC LIMIT 1').get(request.auth.workspace.id, now());
+          if (active && active.plan_id !== plan.id) throw fail(409, 'Gói hiện tại còn thời hạn. Vui lòng liên hệ để đổi gói hoặc đợi hết kỳ.');
+        }
         const existing = await db.prepare('SELECT * FROM payment_orders WHERE workspace_id=? AND idempotency_key=?').get(request.auth.workspace.id, key);
-        if (existing) return { order: existing, created: false };
+        if (existing) {
+          if (existing.product_id !== request.body.productId) throw fail(409, 'Mã yêu cầu đã được dùng cho gói khác.');
+          return { order: existing, created: false };
+        }
         const inFlight = await db.prepare("SELECT * FROM payment_orders WHERE workspace_id=? AND status IN ('CREATING','PENDING','UNKNOWN') LIMIT 1").get(request.auth.workspace.id);
-        if (inFlight) return { order: inFlight, created: false };
+        if (inFlight) {
+          if (inFlight.product_id !== request.body.productId) throw fail(409, 'Vui lòng hoàn tất hoặc hủy đơn đang chờ trước khi chọn gói khác.');
+          return { order: inFlight, created: false };
+        }
         const id = crypto.randomUUID();
         const code = Date.now() * 1000 + crypto.randomInt(1000);
         const stamp = now();
-        await db.prepare(`INSERT INTO payment_orders (id,workspace_id,created_by,idempotency_key,order_code,product_id,product_name,amount,status,created_at,updated_at)
-          VALUES (?,?,?,?,?,'assessment','AI App Assessment',?,'CREATING',?,?)`)
-          .run(id, request.auth.workspace.id, request.auth.id, key, code, config.amount, stamp, stamp);
+        await db.prepare(`INSERT INTO payment_orders (id,workspace_id,created_by,idempotency_key,order_code,product_id,product_name,amount,status,created_at,updated_at,applications,test_allowance,member_allowance)
+          VALUES (?,?,?,?,?,?,?,?,'CREATING',?,?,?,?,?)`)
+          .run(id, request.auth.workspace.id, request.auth.id, key, code, plan?.id || 'assessment', plan?.name || 'AI App Assessment', plan?.amount || config.amount, stamp, stamp, plan?.applications ?? null, plan?.tests ?? null, plan?.members ?? null);
         return { order: await get(code), created: true };
       })();
       if (!reservation.created) return response.json({ order: safeOrder(reservation.order) });
       const { id, order_code: code } = reservation.order;
       try {
         const data = await payos.paymentRequests.create({
-          orderCode: code, amount: config.amount, description: `GS ${code}`,
-          items: [{ name: 'AI App Assessment', quantity: 1, price: config.amount }],
+          orderCode: code, amount: reservation.order.amount, description: `GS ${code}`,
+          items: [{ name: reservation.order.product_name, quantity: 1, price: reservation.order.amount }],
           returnUrl: `${config.origin}/app/billing?order=${id}`,
           cancelUrl: `${config.origin}/app/billing?order=${id}`,
           expiredAt: Math.floor(Date.now() / 1000) + 1800,
         });
-        if (data.orderCode !== code || data.amount !== config.amount || data.currency !== 'VND' || !data.paymentLinkId) throw new Error('Mismatched provider response');
+        if (data.orderCode !== code || data.amount !== reservation.order.amount || data.currency !== 'VND' || !data.paymentLinkId) throw new Error('Mismatched provider response');
         const url = checkoutUrl(data.checkoutUrl);
         await db.prepare("UPDATE payment_orders SET payment_link_id=?,checkout_url=?,status=CASE WHEN status='CREATING' THEN 'PENDING' ELSE status END,updated_at=? WHERE id=?")
           .run(data.paymentLinkId, url, now(), id);
